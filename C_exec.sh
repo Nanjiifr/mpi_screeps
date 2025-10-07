@@ -1,1 +1,0 @@
-gcc -Wall graphing.c -lm -lSDL2 -lSDL2_image -o graphs
