@@ -62,7 +62,7 @@ def init_jeu(nb_joueurs):
     carte = read_carte_bin()
     h = len(carte)
     w = len(carte[0])
-    depots = read_depots()
+    depots = {"J"+str(i):pos for (i,pos) in enumerate(read_depots())}
     joueurs = ["J"+str(i) for i in range(nb_joueurs)]
     etats = {j:{} for j in joueurs}
     global_id = 1
@@ -119,25 +119,27 @@ def lancer_bot(joueur):
 # ----------------------------
 # GESTION DES ETATS
 # ----------------------------
-def lecture_etat(joueur):
-    etat = {}
-    try:
-        with open(f"etat_{joueur}.txt","r",encoding="utf-8") as f:
-            for line in f:
-                parts=line.strip().split()
-                if len(parts)>=7:
-                    uid = int(parts[0])
-                    etat[uid] = {'id':uid,'x':int(parts[1]),'y':int(parts[2]),
-                                 'vie':int(parts[3]),'capacite':int(parts[4]),
-                                 'force':int(parts[5]),'stock':int(parts[6])}
-    except FileNotFoundError:
-        pass
-    return etat
+# def lecture_etat(joueur):
+#     etat = {}
+#     try:
+#         with open(f"etat_{joueur}.txt","r",encoding="utf-8") as f:
+#             for line in f:
+#                 parts=line.strip().split()
+#                 if len(parts)>=7:
+#                     uid = int(parts[0])
+#                     etat[uid] = {'id':uid,'x':int(parts[1]),'y':int(parts[2]),
+#                                  'vie':int(parts[3]),'capacite':int(parts[4]),
+#                                  'force':int(parts[5]),'stock':int(parts[6])}
+#     except FileNotFoundError:
+#         pass
+#     return etat
 
-def ecrire_etat(joueur,unites):
+def ecrire_etat(joueur,unites, depot):
     filename = f"etat_{joueur}.txt"
     with open(filename,"w",encoding="utf-8") as f:
-        for u in unites.values():
+        f.write(f"{depot[0]} {depot[1]}\n")
+        for uid in unites:
+            u = unites[uid]
             f.write(f"{u['id']} {u['x']} {u['y']} {u['vie']} {u['capacite']} {u['force']} {u['stock']}\n")
 
 # ----------------------------
@@ -220,19 +222,16 @@ def traiter_ordres(joueur, carte, etat_joueur, etats_tous, w,h):
             if uid1 in etat_joueur:
                 u1=etat_joueur[uid1]
                 cible=None
-                # rechercher unité cible
-                for other_j, other_unites in etats_tous.items():
-                    for u in other_unites.values():
-                        if u['id']==uid2:
-                            cible=u
-                            break
-                # si cible=0 -> dépôt adjacent
                 if uid2==0:
+                    #TODO : Modifier pour que le dépôt soit en argumet
                     for dx in [-1,0,1]:
                         for dy in [-1,0,1]:
                             nx=u1['x']+dx; ny=u1['y']+dy
                             if in_bounds(w,h,nx,ny) and carte[ny][nx]==-2:
                                 cible={'x':nx,'y':ny,'stock':0,'capacite':999}
+                elif uid2 in etat_joueur: # transfert unité adjacente
+                    cible=etat_joueur[uid2]
+                
                 # vérifier proximité
                 if cible and abs(cible['x']-u1['x'])<=1 and abs(cible['y']-u1['y'])<=1:
                     q=min(u1['stock'], cible['capacite']-cible['stock'])
@@ -255,14 +254,12 @@ def boucle_principale(nb_joueurs):
     while True:
         # lancer bots et lire état
         for j in joueurs:
+            ecrire_etat(j, etats[j], depots[j])
             lancer_bot(j)
-            etats[j] = lecture_etat(j)
-        # traiter ordres
-        for j in joueurs:
             etats[j] = traiter_ordres(j, carte, etats[j], etats, w,h)
-        # sauvegarder état
-        for j in joueurs:
-            ecrire_etat(j, etats[j])
+            ecrire_etat(j, etats[j], depots[j])
+
+            
         # redraw
         canvas.destroy()
         canvas = draw_grid(root, carte, depots, etats, w, h)
