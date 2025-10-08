@@ -8,7 +8,7 @@ Usage :
 Exemples :
     python3 gen_carte.py 2 30 30 42
 Sortie :
-    - carte.bin : int16 little-endian, ligne par ligne (valeurs -1 murs, -2 dépôts, 0..10 ressources)
+    - carte.bin : int8, ligne par ligne (valeurs -1 murs, -2 dépôts, 0..10 ressources)
     - carte.txt : version lisible pour vérification
 Notes :
     - nb_joueurs doit être 2, 4 ou 8 (8 travaille mieux si la carte est carrée)
@@ -212,13 +212,12 @@ def find_depot_positions(w,h, nb_players, grid, rng):
     return positions
 
 def write_carte_bin(grid, filename="carte.bin"):
-    # Write int16 little-endian values row-major
     h = len(grid); w = len(grid[0])
     with open(filename, "wb") as f:
         for y in range(h):
             for x in range(w):
                 v = int(grid[y][x])
-                f.write(struct.pack("<h", v))
+                f.write(struct.pack("<b", v))
     print("Wrote", filename)
 
 def write_carte_txt(grid, depots=None, filename="carte.txt"):
@@ -229,7 +228,7 @@ def write_carte_txt(grid, depots=None, filename="carte.txt"):
             for x in range(w):
                 v = grid[y][x]
                 if depots and (x,y) in depots:
-                    row += "D"
+                    row += " D"
                 elif v == -1:
                     row += "██"
                 elif v == 0:

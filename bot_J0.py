@@ -13,6 +13,7 @@ def lire_etat():
     etat = {}
     try:
         with open(f"etat_{J}.txt","r",encoding="utf-8") as f:
+            depot = f.readline().strip().split()
             for line in f:
                 parts = line.strip().split()
                 if len(parts)>=7:

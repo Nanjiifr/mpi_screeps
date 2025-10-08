@@ -41,7 +41,7 @@ def read_carte_bin(filename="carte.bin"):
     idx = 0
     for y in range(h):
         for x in range(w):
-            grid[y][x] = struct.unpack("<h", data[idx:idx+2])[0]
+            grid[y][x] = struct.unpack("b", data[idx:idx+2])[0]
             idx += 2
     return grid
 
