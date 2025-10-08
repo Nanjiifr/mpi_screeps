@@ -33,7 +33,7 @@ def in_bounds(w,h,x,y):
 def read_carte_bin(filename="carte.bin"):
     with open(filename,"rb") as f:
         data = f.read()
-    n = len(data)//2
+    n = len(data)
     import math
     h = int(math.sqrt(n))
     w = n//h
@@ -41,8 +41,8 @@ def read_carte_bin(filename="carte.bin"):
     idx = 0
     for y in range(h):
         for x in range(w):
-            grid[y][x] = struct.unpack("b", data[idx:idx+2])[0]
-            idx += 2
+            grid[y][x] = struct.unpack("b", data[idx:idx+1])[0]
+            idx += 1
     return grid
 
 def read_depots(filename="depots.txt"):

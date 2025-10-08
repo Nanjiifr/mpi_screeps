@@ -9,6 +9,24 @@ import sys, os, random
 
 J = sys.argv[1] if len(sys.argv) > 1 else "J0"
 
+def ecrire_carte_bin(filename="carte.bin", carte):
+    with open(filename,"rb") as f:
+        
+def read_carte_bin(filename="carte.bin"):
+    with open(filename,"rb") as f:
+        data = f.read()
+    n = len(data)
+    import math
+    h = int(math.sqrt(n))
+    w = n//h
+    grid = [[0 for _ in range(w)] for _ in range(h)]
+    idx = 0
+    for y in range(h):
+        for x in range(w):
+            grid[y][x] = struct.unpack("b", data[idx:idx+1])[0]
+            idx += 1
+    return grid
+
 def lire_etat():
     etat = {}
     try:
