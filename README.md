@@ -1,6 +1,7 @@
 # mpi_screeps (draft)
 
 Les caractéristiques des unités : VIE, CAPACITE, FORCE
+
 Impacts :
 - lors d'une attaque, la FORCE de l'un est soustraite à la VIE de l'autre et réciproquement
 - la CAPACITE permet de charger plus de ressource
