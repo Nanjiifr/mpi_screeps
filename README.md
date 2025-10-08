@@ -12,6 +12,7 @@ Chaque unité peut :
 - se déplacer
 - pomper une unité de ressource (si son stock est inférieur à sa capacité)
 - transmettre son stock à une unité voisine (ou au dépôt) (min(stock unité, capacite voisine - stock voisine)
+- 
 Une tentative de déplacement vers une unité ennemie voisine est interprétée comme une attaque. Le déplacement a lieu si l'unité ennemie meurt au cours de l'attaque.
 
 Les unités pop sur le dépôt. Une seule unité possible dans chaque case.
