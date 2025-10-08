@@ -32,3 +32,5 @@ L'objectif est de rendre viables différentes stratégies. Notamment des couloir
 Un tour de jeu d'un joueur consiste en :
 1) ordre de créer une unité avec 3 nombres indiquant les points d'améliorations sur les caractéristiques
 2) une liste d'ordre pour chaque unité, données dans un ordre au choix du joueur et exécutées dans cet ordre
+
+J'ai essayé avec ChatGPT de faire un début. La génération de la map est plutôt pas mal avec gen_carte.py. L'affichage dans le moteur fonctionne correctement mais par contre soit les bots, soit le moteur ne fonctionne pas correctement. Je n'ai pas débuggé davantage. C'était plus pour avoir une idée de ce à quoi ça pourrait ressembler. Peut-être que certaines choses sont réutilisables.
