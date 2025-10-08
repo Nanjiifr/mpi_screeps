@@ -217,7 +217,7 @@ def write_carte_bin(grid, filename="carte.bin"):
         for y in range(h):
             for x in range(w):
                 v = int(grid[y][x])
-                f.write(struct.pack("<b", v))
+                f.write(struct.pack("b", v))
     print("Wrote", filename)
 
 def write_carte_txt(grid, depots=None, filename="carte.txt"):

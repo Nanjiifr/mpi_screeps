@@ -30,7 +30,7 @@ def in_bounds(w,h,x,y):
 # ----------------------------
 # LECTURE CARTE & DEPOTS
 # ----------------------------
-def read_carte_bin(filename="carte.bin"):
+def read_carte_bin(filename):
     with open(filename,"rb") as f:
         data = f.read()
     n = len(data)
@@ -45,6 +45,14 @@ def read_carte_bin(filename="carte.bin"):
             idx += 1
     return grid
 
+def ecrire_carte_bin(filename, grid):
+    h = len(grid); w = len(grid[0])
+    with open(filename, "wb") as f:
+        for y in range(h):
+            for x in range(w):
+                v = int(grid[y][x])
+                f.write(struct.pack("b", v))
+
 def read_depots(filename="depots.txt"):
     depots = []
     with open(filename,"r", encoding="utf-8") as f:
@@ -58,8 +66,8 @@ def read_depots(filename="depots.txt"):
 # ----------------------------
 # STRUCTURE DU JEU
 # ----------------------------
-def init_jeu(nb_joueurs):
-    carte = read_carte_bin()
+def init_jeu(nb_joueurs, fichiercarte):
+    carte = read_carte_bin(fichiercarte)
     h = len(carte)
     w = len(carte[0])
     depots = {"J"+str(i):pos for (i,pos) in enumerate(read_depots())}
@@ -244,8 +252,8 @@ def traiter_ordres(joueur, carte, etat_joueur, etats_tous, w,h):
 # ----------------------------
 # BOUCLE PRINCIPALE
 # ----------------------------
-def boucle_principale(nb_joueurs):
-    carte, depots, joueurs, etats, global_id, w,h = init_jeu(nb_joueurs)
+def boucle_principale(nb_joueurs, fichiercarte = "carte.bin"):
+    carte, depots, joueurs, etats, global_id, w,h = init_jeu(nb_joueurs, fichiercarte)
     root = tk.Tk()
     root.title("Moteur Screeps simplifié")
     canvas = draw_grid(root, carte, depots, etats, w, h)
@@ -254,6 +262,7 @@ def boucle_principale(nb_joueurs):
     while True:
         # lancer bots et lire état
         for j in joueurs:
+            ecrire_carte_bin(fichiercarte, carte)
             ecrire_etat(j, etats[j], depots[j])
             lancer_bot(j)
             etats[j] = traiter_ordres(j, carte, etats[j], etats, w,h)

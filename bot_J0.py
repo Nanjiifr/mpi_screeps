@@ -8,9 +8,6 @@ Bot qui crée sa première unité directement sur le dépôt, collecte les resso
 import sys, os, random
 
 J = sys.argv[1] if len(sys.argv) > 1 else "J0"
-
-def ecrire_carte_bin(filename="carte.bin", carte):
-    with open(filename,"rb") as f:
         
 def read_carte_bin(filename="carte.bin"):
     with open(filename,"rb") as f:
