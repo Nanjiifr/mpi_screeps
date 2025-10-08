@@ -65,7 +65,7 @@ try:
                     pass
                 
                 elif(i==3):     # midas
-                    value=value+",""M,"+str(random.randint(1,5))
+                    value=value+",""M,"+str(random.randint(3,5))
                     pass
                 
                 elif(i==4):     # speed
@@ -83,9 +83,13 @@ try:
 
 
     # output the map
-    for line in map:
-        for elt in line:
-            print(elt,end=" ",file=f)
+    print(2*N,file=f)
+    for i in range(len(map)):
+        line=map[i]
+        for j in range(len(line)):
+            elt=line[j]
+            print(elt,end=(" " if j != 2*N-1 else ""),file=f)
+        
         print("",file=f)
 
     print(f"generated map of size {2*N}x{2*N} inside {filename}")
