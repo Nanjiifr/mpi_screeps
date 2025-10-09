@@ -15,10 +15,11 @@ try:
     MAX_TURNS = sys.argv[2]
     N_PLAYERS = len(sys.argv)-3
     MAPLEN    = 0
-    assert(N_PLAYERS>=0)
+    assert(N_PLAYERS>0)
 except:
     print("Usage : python3 run___.py <mapName> <maxTurns> <players>",file=sys.stderr)
     assert 0
+map = []    # map = (string * int * int | int array) array array --> (tileName, resource, tileMeta)
 
 # graphics constant
 WIDTH=1000
@@ -26,6 +27,108 @@ HEIGHT=800
 TILE_SIZE=50
 SP_OFFSET=TILE_SIZE/6
 
+# player-related constants
+PLAYER_SPAWN = [[2, 2], [MAPLEN-1-2, MAPLEN-1-2], [2, MAPLEN-1-2], [MAPLEN-1-2, 2]]
+PLAYER_SPAWN = PLAYER_SPAWN[:N_PLAYERS]     # only keeping players
+PLAYER_MINIONS=[[] for _ in range(N_PLAYERS)]
+PLAYER_NAMES = []
+for p in range(N_PLAYERS):
+    PLAYER_NAMES.append(sys.argv[3+p])
+random.shuffle(PLAYER_NAMES)     # random starting points
+
+# check if the arguments (ie the player functions) are valid
+for pname in PLAYER_NAMES:
+    assert(
+        len(pname) >= 3 and (
+            pname[0] == '.' and pname[1] == "/"     # executable file
+        ) or (
+            pname[-1] == 'y' and pname[-2] == 'p' and pname[-3] == '.'      # python file
+        )
+    )
+
+# writes data
+def write_player_data(pl_i):
+    f=open("mapData.txt", "w")
+
+    # map
+    print(MAPLEN,file=f)
+    for line in range(MAPLEN):
+        for col in range(MAPLEN):
+            (spec,rsc,meta)=map[line][col]
+            if(spec=="RESO"):
+                print("R,",file=f,end="")
+            elif(spec=="WALL"):
+                print("W,",file=f,end="")
+            elif(spec=="DASH"):
+                print("D,",file=f,end="")
+            elif(spec=="PROT"):
+                print("S,",file=f,end="")
+            elif(spec=="BONK"):
+                print("F,",file=f,end="")
+            elif(spec=="GOLD"):
+                print("M,",file=f,end="")
+            elif(spec=="SPED"):
+                print("P,",file=f,end="")
+            else:
+                print(f"ERROR : unrecognized tile type ({spec})",file=sys.stderr)
+                assert 0
+
+            print(f"{rsc},{meta}",file=f,end=(" " if col != MAPLEN-1 else ""))
+        print("",file=f)
+
+    # players
+    nMinions=0
+    for pl in range(N_PLAYERS):
+        playerMinions=PLAYER_MINIONS[pl]
+        nMinions += len(playerMinions)
+
+    print(nMinions,file=f)
+
+    for pl in range(N_PLAYERS):
+        for minion in PLAYER_MINIONS[pl]:
+            (mX,mY,mCar,mHp,mSize,mAtk)=minion
+            print(f"{pl},{mX},{mY},{mCar},{mHp},{mSize},{mAtk}",file=f)
+
+    # current player
+    print(pl_i,file=f)
+
+    f.close()
+
+def read_player_data(pl_i):
+    with open("answer.txt", "r") as file:
+        for line in file:
+            data=list(map(int,line.split(" ")))
+            x,y,xdest,ydest=data
+            if(xdest==x and ydest==y):
+                # pump
+                pass
+
+            elif(abs(xdest-x)+abs(ydest-y)==1):
+                # move
+                pass
+
+            else:
+                # invalid
+                pass
+
+# plays the turn of a player
+def execute_player(pl_i):
+    if(pl_i < 0):
+        print(f"ERROR : trying to play negative player {pl_i}",file=sys.stderr)
+
+    if(pl_i >= N_PLAYERS):
+        print(f"ERROR : trying to play overflowing player {pl_i}",file=sys.stderr)
+    
+    pname = PLAYER_NAMES[pl_i]
+    try:
+        write_player_data(pl_i)
+        exec(pname)
+        read_player_data(pl_i)
+    except:
+        pass    # an error result in a skipped turn
+
+
+# .isdigit() but for relative numbers as well
 def isRelative(str):
     return (str.isdigit() or (len(str)>0 and str[0]=="-" and str[1:].isdigit()))
 
@@ -51,8 +154,6 @@ def toTileName(str):
         assert 0
 
 # parsing the data
-# map = (string * int * int | int array) array array --> (tileName, resource, tileMeta)
-map = []
 iii=0
 with open(MAPNAME) as file:
     fst=True
@@ -83,6 +184,8 @@ def areValid(i,j):
     return 0 <= i < MAPLEN and 0 <= j < MAPLEN
 
 DIG_FONT = ""
+
+# self explainatory
 def drawMap(root):
     canvas = tk.Canvas(root, width=MAPLEN*TILE_SIZE, height=MAPLEN*TILE_SIZE, bg="white")
     canvas.pack()
@@ -143,6 +246,7 @@ def mainLoop():
     canvas = drawMap(root)
     root.update()
     while(1):
-        pass
+        execute_player(0)
+        time.sleep(1.0)
 
 mainLoop()
