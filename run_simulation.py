@@ -12,7 +12,7 @@ arguments 3~N : players (au nombre de N-2)
 # global constants
 try:
     MAPNAME   = sys.argv[1]
-    MAX_TURNS = sys.argv[2]
+    MAX_TURNS = int(sys.argv[2])
     N_PLAYERS = len(sys.argv)-3
     MAPLEN    = 0
     assert(N_PLAYERS>0)
@@ -125,16 +125,19 @@ def read_player_data(pl_i):
                 dat=line.split(" ")
                 _,hp,size,atk=dat
                 hp,size,atk=int(hp),int(size),int(atk)
-                if(not (PLAYER_SPAWN[pl_i] in PLAYER_MINIONS[pl_i].keys())):   # check if spawn is free
-                    if(PLAYER_RSCS[pl_i] >= 2*hp + 2*size + atk):       # check is the player has enough resources
-                        PLAYER_MINIONS[pl_i][PLAYER_SPAWN[pl_i]] = [0,hp,size,atk]
-                        PLAYER_RSCS[pl_i] -= 2*hp + 2*size + atk
-                        minionMoved[PLAYER_SPAWN[pl_i]]=True
-                        print(f"NEW_MINION {hp},{size},{atk}",file=logFile,end="\n")
+                if(hp>0 and size>=0 and atk >=0):
+                    if(not (PLAYER_SPAWN[pl_i] in PLAYER_MINIONS[pl_i].keys())):   # check if spawn is free
+                        if(PLAYER_RSCS[pl_i] >= 2*hp + 2*size + atk):       # check is the player has enough resources
+                            PLAYER_MINIONS[pl_i][PLAYER_SPAWN[pl_i]] = [0,2*hp,2*size,atk]
+                            PLAYER_RSCS[pl_i] -= 2*hp + 2*size + atk
+                            minionMoved[PLAYER_SPAWN[pl_i]]=True
+                            print(f"NEW_MINION {hp},{size},{atk}",file=logFile,end="\n")
+                        else:
+                            print(f"NEW_MINION_BROKE {hp},{size},{atk}",file=logFile,end="\n")
                     else:
-                        print(f"NEW_MINION_BROKE {hp},{size},{atk}",file=logFile,end="\n")
+                        print(f"NEW_MINION_FAIL {hp},{size},{atk}",file=logFile,end="\n")
                 else:
-                    print(f"NEW_MINION_FAIL {hp},{size},{atk}",file=logFile,end="\n")
+                    print(f"NEW_MINION_INVALID {hp},{size},{atk}",file=logFile,end="\n")
 
             # move existing minion
             else:
@@ -231,10 +234,14 @@ def execute_player(pl_i):
 # remove all players with HP<=0
 def killDeadMinions():
     for minionList in PLAYER_MINIONS:
+        toDel=[]
         for (x,y),(cap,hp,_,_) in minionList.items():
-            if(hp == 0):
-                map[x][y][1] += cap
-                del minionList[x,y]
+            if(hp <= 0):
+                toAddTile=map[x][y]
+                map[x][y] = (toAddTile[0],toAddTile[1]+cap,toAddTile[2])
+                toDel.append((x,y))
+        for (x,y) in toDel:
+            del minionList[(x,y)]
 
 # .isdigit() but for relative numbers as well
 def isRelative(str):
@@ -271,12 +278,12 @@ with open(MAPNAME) as file:
             # initialize everything
             fst = False
             MAPLEN = int(line)
-            PLAYER_SPAWN = [(2, 2), (MAPLEN-1-2, MAPLEN-1-2), (2, MAPLEN-1-2), (MAPLEN-1-2, 2)]
+            PLAYER_SPAWN = [(1, 1), (MAPLEN-1-1, MAPLEN-1-1), (1, MAPLEN-1-1), (MAPLEN-1-1, 1)]
             PLAYER_SPAWN = PLAYER_SPAWN[:N_PLAYERS]     # only keeping players
             map = [["X" for _ in range(MAPLEN)] for _ in range(MAPLEN)]
         else:
             comp=line.split(" ")
-            print(comp)
+            #print(comp)
             for jjj in range(len(comp)):
                 data=comp[jjj].split(",")
                 tType=(data[0] if len(data)==1 else data[1])
@@ -296,17 +303,24 @@ def areValid(i,j):
 # text fonts for tkinter
 DIG_FONT = ""
 MIN_FONT = ""
+SCO_FONT = ""
 
 # self explainatory
-def drawMap(root):
-    canvas = tk.Canvas(root, width=(4+MAPLEN)*TILE_SIZE, height=MAPLEN*TILE_SIZE, bg="white")
+def drawMap(root,curTurn):
+    canvas = tk.Canvas(root, width=(4+2+MAPLEN)*TILE_SIZE, height=(2+MAPLEN)*TILE_SIZE, bg="white")
     canvas.pack()
+
+    for i in range(N_PLAYERS):
+        px,py=PLAYER_SPAWN[i]
+        canvas.create_rectangle((px+1-2)*TILE_SIZE,(py+1-2)*TILE_SIZE,(px+1+3)*TILE_SIZE,(py+1+3)*TILE_SIZE,fill=PLAYER_COLOR[i])
+
+    # map
     for y in range(MAPLEN):
         for x in range(MAPLEN):
             data=map[y][x]
             val = data[1]
-            x0 = x*TILE_SIZE
-            y0 = y*TILE_SIZE
+            x0 = (1+x)*TILE_SIZE
+            y0 = (1+y)*TILE_SIZE
             x1 = x0+TILE_SIZE
             y1 = y0+TILE_SIZE
             if data[0]=="WALL":
@@ -335,17 +349,32 @@ def drawMap(root):
             elif(data[0]=="SPED"):
                 canvas.create_rectangle(x0+SP_OFFSET,y0+SP_OFFSET,x1-SP_OFFSET,y1-SP_OFFSET,fill="#25ffff")
                 canvas.create_text((x0+x1)//2,(y0+y1)//2,text=str(data[2]),font=DIG_FONT)
+                
+    # data for each player
+    for i in range(N_PLAYERS):
+        px,py=PLAYER_SPAWN[i]
+        canvas.create_rectangle((1+px)*TILE_SIZE,(1+py)*TILE_SIZE,(px+2)*TILE_SIZE,(py+2)*TILE_SIZE,fill=PLAYER_COLOR[i])
+        dx=2*(1 if px>=MAPLEN//2 else -1)
+        dy=2*(1 if py>=MAPLEN//2 else -1)
+        canvas.create_text((1+px+dx)*TILE_SIZE+TILE_SIZE//2,(1+py+dy)*TILE_SIZE+TILE_SIZE//2,text=str(PLAYER_SCORE[i]),fill="#000000",font=SCO_FONT)
 
+    # minions
     for i in range(N_PLAYERS):
         minionList=PLAYER_MINIONS[i]
         for (x,y),(cap,hp,size,atk) in minionList.items():
-            x0 = x*TILE_SIZE
-            y0 = y*TILE_SIZE
+            x0 = (1+x)*TILE_SIZE
+            y0 = (1+y)*TILE_SIZE
             x1 = x0+TILE_SIZE
             y1 = y0+TILE_SIZE
 
             canvas.create_rectangle(x0+MN_OFFSET,y0+MN_OFFSET,x1-MN_OFFSET,y1-MN_OFFSET, fill=PLAYER_COLOR[i])
-            canvas.create_text((x0+x1)//2, (y0+y1)//2, text=str(cap),font=MIN_FONT)
+            canvas.create_text((x0+x1)//2, (y0+y1)//2,text=str(cap),font=MIN_FONT)
+
+            
+    
+    # metadata
+    # current turn
+    canvas.create_text((MAPLEN+3)*TILE_SIZE,3*TILE_SIZE,text=str(curTurn)+"/"+str(MAX_TURNS),font=MIN_FONT,fill="#222222")
     
     return canvas
 
@@ -353,13 +382,16 @@ turnOrder = [i for i in range(N_PLAYERS)]
 def mainLoop():
     global DIG_FONT
     global MIN_FONT
+    global SCO_FONT
     root = tk.Tk()
     DIG_FONT = tk.font.Font(family = "Symbol", size = 24)
     MIN_FONT = tk.font.Font(family = "monospace", size = 20)
+    SCO_FONT = tk.font.Font(family = "Bold", size = 20)
     root.title("Moteur Screeps simplifié")
-    canvas = drawMap(root)
+    currentTurn=0
+    canvas = drawMap(root,currentTurn)
     root.update()
-    while(1):
+    while(currentTurn < MAX_TURNS):
         # turn order is randomized
         random.shuffle(turnOrder)
         for p in turnOrder:
@@ -371,11 +403,14 @@ def mainLoop():
         # log the end of the turn + update the canvas
         print("",file=logFile)
         canvas.destroy()
-        canvas = drawMap(root)
+        canvas = drawMap(root,currentTurn)
         root.update()
 
         # sleep
         time.sleep(DT)
+
+        # end the turn
+        currentTurn += 1
 
     logFile.close()
 
