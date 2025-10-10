@@ -103,6 +103,7 @@ def write_player_data(pl_i):
 
     # current player + your resources
     print(pl_i, PLAYER_RSCS[pl_i],file=f)
+    print(PLAYER_SPAWN[pl_i][0],PLAYER_SPAWN[pl_i][1],file=f)
 
     f.close()
 

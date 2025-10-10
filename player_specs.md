@@ -17,6 +17,7 @@
             \* <CAR> is the number of resource the minion is holding
             \* <HP>,<SIZE>,<ATK> are the minion's stats
     - ID RSC : your player ID and the current number of resources you have
+    - SPX SPY : the coordinate of your depot
 
 **OUTPUT** (to be writen inside *answer.txt*) :
     - at most K lines (where K is the number of the minion you own) with the following structure :
