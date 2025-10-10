@@ -1,3 +1,8 @@
 carte.*
 outMap*
+<<<<<<< HEAD
 *.txt
+=======
+logFile.txt
+mapData.txt
+>>>>>>> 91aa69b32fb63bbea66fedfb642c6ffac281c2f3
