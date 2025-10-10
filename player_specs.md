@@ -26,8 +26,8 @@
             \* <XDEST>,<YDEST> is the desired destinaton :
                 -> if XDEST,YDEST==X,Y, then the action will be to *PUMP* one resource from the tile you're standing on
                 -> if XDEST,YDEST is exactly one tile away from your X,Y, you will move here
-                    \* moving into an enemy minion will cause you to attack him, if you survive and kill you will move yo his location
-                    \* moving into a friendly minion/youe depot will transfer your reserve of resources into the target (the max amount will be transfered)
+                    \* moving into an enemy minion will cause you to attack him (if you survive and kill you will not move to his location)
+                    \* moving into a friendly minion/your depot will transfer your reserve of resources into the target (the max amount will be transfered)
     - (optionnal) one line at the end with the following structure :
         CREATE <HP>,<SIZE>,<ATK>
             \* this will create a minion at your depot with the corresponding stats. If you do not have enough points to create one, this instruction will be
