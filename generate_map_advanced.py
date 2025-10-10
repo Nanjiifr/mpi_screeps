@@ -43,7 +43,7 @@ try:
             spVal = random.randint(1,10000)/100
             value="-1"
             if not ([line, col] in walls):
-                value = str(max(1,int(boxMuller(line,col))))
+                value = str(min(10,max(1,int(boxMuller(line,col)))))
                 
             if ((abs(line-N) <= N//2-1 and abs(col-N) <= N//2-1) and (spVal < sp)):
                 weight=random.randint(0,100)

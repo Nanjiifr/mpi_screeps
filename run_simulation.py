@@ -153,7 +153,7 @@ def read_player_data(pl_i):
                         # pump
                         tile=map[x][y]
                         if(tile[1] > 0 and minData[0] < minData[2]):
-                            tile[1] -= 1
+                            map[x][y] = (tile[0],tile[1]-1,tile[2])
                             minData[0] += 1
                             minionMoved[(x,y)]=True
                             print(f"PUMP {x},{y}",file=logFile,end="\n")
@@ -226,6 +226,7 @@ def execute_player(pl_i):
         print(f"Error while executing player {pl_i}'s code ({PLAYER_NAMES[pl_i]}).",file=sys.stderr)
 
     if(execGood):
+        #read_player_data(pl_i)
         try:
             read_player_data(pl_i)
         except:
@@ -238,7 +239,7 @@ def killDeadMinions():
         for (x,y),(cap,hp,_,_) in minionList.items():
             if(hp <= 0):
                 toAddTile=map[x][y]
-                map[x][y] = (toAddTile[0],toAddTile[1]+cap,toAddTile[2])
+                map[x][y] = (toAddTile[0],min(10,toAddTile[1]+cap),toAddTile[2])
                 toDel.append((x,y))
         for (x,y) in toDel:
             del minionList[(x,y)]
@@ -293,6 +294,8 @@ with open(MAPNAME) as file:
                     map[iii][jjj] = (toTileName(data[1]),int(data[0]),int(data[2]))
             iii+=1
 
+for (x,y) in PLAYER_SPAWN:
+    map[x][y] = ("RESO",0,0)
 #for line in map:
 #    print(line)
 
