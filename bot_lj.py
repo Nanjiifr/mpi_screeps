@@ -1,3 +1,4 @@
+#! /usr/bin/python3
 from random import choice
 
 CASE_RESS = 0
@@ -45,7 +46,10 @@ with open("mapData.txt") as mapFile:
     id, ressActuelles = map(int, mapFile.readline().strip().split())
     depotX, depotY = map(int, mapFile.readline().strip().split())
 
-    mesMinions = minionsJoueurs[id]
+    if id in minionsJoueurs:
+        mesMinions = minionsJoueurs[id]
+    else:
+        mesMinions = []
     with open("answer.txt", "w") as reponse:
         for mX, mY, mCarg, mHp, mCargMax, mForce in mesMinions:
             if mCargMax > 0: # pas un soldat
