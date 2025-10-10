@@ -367,10 +367,13 @@ def mainLoop():
         # kill
         killDeadMinions()
 
+        # log the end of the turn + update the canvas
         print("",file=logFile)
         canvas.destroy()
         canvas = drawMap(root)
         root.update()
+
+        # sleep
         time.sleep(DT)
 
     logFile.close()
