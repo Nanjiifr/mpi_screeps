@@ -16,7 +16,7 @@
             \* <X> and <Y> are its coords (please note that (0,0) is at the top left of the map)
             \* <CAR> is the number of resource the minion is holding
             \* <HP>,<SIZE>,<ATK> are the minion's stats
-    - ID : your player ID
+    - ID RSC : your player ID and the current number of resources you have
 
 **OUTPUT** (to be writen inside *answer.txt*) :
     - at most K lines (where K is the number of the minion you own) with the following structure :
