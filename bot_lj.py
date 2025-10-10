@@ -1,3 +1,5 @@
+from random import choice
+
 CASE_RESS = 0
 CASE_TYPE = 1
 CASE_SPEC = 2
@@ -31,14 +33,40 @@ with open("mapData.txt") as mapFile:
     m = int(mapFile.readline())
     minions = []
     
-    mimionsJoueurs = {}
+    minionsJoueurs = {}
     for i in range(m):
         *minion, = map(int, mapFile.readline().strip().split(","))
         if minion[MINION_PROP] in minionsJoueurs:
-            minionsJoueurs[minion[MINION_PROP]].append(minion)
+            minionsJoueurs[minion[MINION_PROP]].append(minion[1:])
         else:
-            minionsJoueurs[minion[MINION_PROP]]=[minion]
+            minionsJoueurs[minion[MINION_PROP]]=[minion[1:]]
         
-    id, rsc = map(int, mapFile.readline().strip().split())
+    id, ressActuelles = map(int, mapFile.readline().strip().split())
+    depotX, depotY = map(int, mapFile.readline().strip().split())
 
+    mesMinions = minionsJoueurs[id]
     
+    for mX, mY, mCarg, mHp, mCargMax, mForce in mesMinions:
+        if mCargMax > 0: # pas un soldat
+            if mCarg == mCargMax:
+            # Retour en direction du dépôt
+                cands = []
+                if mX < depotX:
+                    cands.append([mX+1, mY])
+                elif mx > depotX:
+                    cands.append([mX-1, mY])
+                if mY < depotY:
+                    cands.append([mX, mY+1])
+                elif mY > depotY:
+                    cands.append([mX, mY-1])
+                newX, newY = choice(cands)
+                print(mX, mY, newX, newY)
+            else:
+                if carte[mX][mY]>0:
+                    print(mX, mY, mX, mY) # Pomper
+                else:
+                    cands = [(mX-1, mY), (mX+1, mY), (mX, mY-1), (mX, mY+1)]
+                    newX, newY = max(zip(map(cands,lambda c:carte[c[0]][c[1]]), cands))[1]
+                    print(mX, mY, newX, newY) # Se déplacer
+        
+    print("CREATE", 0, min(10, ressActuelles-1), 0)
