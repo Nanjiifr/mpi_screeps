@@ -22,7 +22,22 @@ let baseX, baseY = input_line ptr |> String.split_on_char ' ' |> List.map int_of
 
 close_in ptr;
 
-Array.iter (fun line ->
-  Array.iter (fun (t,r,m) -> Printf.printf "[%s %d %d]" t r m) line;
-  print_endline ""
-) map
+(*
+TYPE_MUR = 'W'
+TYPE_NORMAL = 'R'
+TYPE_DASH = 'D'
+TYPE_SHIELD = 'S'
+TYPE_FORCE = 'F'
+TYPE_MIDAS = 'M'
+TYPE_VITESSE = 'P'
+*)
+
+let ptrOut = open_out "answer.txt" in
+
+Array.iter (fun minion ->
+  if minion.owner = myID then begin
+    (* do things here *)
+  end
+) minions;
+
+close_out ptrOut
