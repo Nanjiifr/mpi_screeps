@@ -74,4 +74,4 @@ with open("mapData.txt") as mapFile:
                         newX, newY = max(zip(map(cands,lambda c:carte[c[0]][c[1]]), cands))[1]
                         print(mX, mY, newX, newY, file=reponse) # Se déplacer
             
-        print("CREATE", 0, min(10, ressActuelles-1), 0, file=reponse)
+        print("CREATE", 1, min(10, ressActuelles-1), 0, file=reponse)
