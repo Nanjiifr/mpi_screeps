@@ -25,10 +25,10 @@ map = []
 # graphics constant
 WIDTH=1000
 HEIGHT=800
-TILE_SIZE=50
+TILE_SIZE=65
 SP_OFFSET=TILE_SIZE/6
-MN_OFFSET=TILE_SIZE/5
-PLAYER_COLOR = ["#dd0000", "#dddd00", "#00dd00", "#0000dd"]
+MN_OFFSET=TILE_SIZE/15
+PLAYER_COLOR = ["#dd0000", "#dddd00", "#00dd00", "#6666ff"]
 DT=0.5
 
 # player-related constants
@@ -306,6 +306,7 @@ def areValid(i,j):
 # text fonts for tkinter
 DIG_FONT = ""
 MIN_FONT = ""
+MI2_FONT = ""
 SCO_FONT = ""
 
 # self explainatory
@@ -359,7 +360,8 @@ def drawMap(root,curTurn):
         canvas.create_rectangle((1+px)*TILE_SIZE,(1+py)*TILE_SIZE,(px+2)*TILE_SIZE,(py+2)*TILE_SIZE,fill=PLAYER_COLOR[i])
         dx=2*(1 if px>=MAPLEN//2 else -1)
         dy=2*(1 if py>=MAPLEN//2 else -1)
-        canvas.create_text((1+px+dx)*TILE_SIZE+TILE_SIZE//2,(1+py+dy)*TILE_SIZE+TILE_SIZE//2,text=str(PLAYER_SCORE[i]),fill="#000000",font=SCO_FONT)
+        canvas.create_text((1+px+dx//2)*TILE_SIZE+TILE_SIZE//2,(1+py+dy)*TILE_SIZE+TILE_SIZE//2,text=str(PLAYER_SCORE[i])+" pts",fill="#000000",font=SCO_FONT)
+        canvas.create_text((1+px+dx)*TILE_SIZE+TILE_SIZE//2,(1+py+dy//2)*TILE_SIZE+TILE_SIZE//2,text=str(PLAYER_RSCS[i])+"$",fill="#000000",font=SCO_FONT)
 
     # minions
     for i in range(N_PLAYERS):
@@ -371,7 +373,9 @@ def drawMap(root,curTurn):
             y1 = y0+TILE_SIZE
 
             canvas.create_rectangle(x0+MN_OFFSET,y0+MN_OFFSET,x1-MN_OFFSET,y1-MN_OFFSET, fill=PLAYER_COLOR[i])
-            canvas.create_text((x0+x1)//2, (y0+y1)//2,text=str(cap),font=MIN_FONT)
+            canvas.create_text((x0+x1)//2, (y0+y1)//2-TILE_SIZE//3,text=str(cap)+"/"+str(size),font=MIN_FONT)
+            canvas.create_text((x0+x1)//2, (y0+y1)//2             ,text=str(atk)+" DMG",font=MI2_FONT)
+            canvas.create_text((x0+x1)//2, (y0+y1)//2+TILE_SIZE//3,text=str(hp)+" HP",font=MI2_FONT)
 
             
     
@@ -385,10 +389,12 @@ turnOrder = [i for i in range(N_PLAYERS)]
 def mainLoop():
     global DIG_FONT
     global MIN_FONT
+    global MI2_FONT
     global SCO_FONT
     root = tk.Tk()
     DIG_FONT = tk.font.Font(family = "Symbol", size = 24)
-    MIN_FONT = tk.font.Font(family = "monospace", size = 20)
+    MIN_FONT = tk.font.Font(family = "monospace", size = 15)
+    MI2_FONT = tk.font.Font(family = "monospace", size = 13)
     SCO_FONT = tk.font.Font(family = "Bold", size = 20)
     root.title("Moteur Screeps simplifié")
     currentTurn=0
