@@ -1,0 +1,1 @@
+ocamlfind ocamlopt bot_aa.ml -o bot_aa

@@ -19,7 +19,7 @@ try:
 except:
     print("Usage : python3 run___.py <mapName> <maxTurns> <players>",file=sys.stderr)
     assert 0
-map = []    
+map = []
 ''' map = (string * int * int | int array) array array --> (tileName, resource, tileMeta) '''
 
 # graphics constant
@@ -286,8 +286,8 @@ with open(MAPNAME) as file:
                     map[iii][jjj] = (toTileName(data[1]),int(data[0]),int(data[2]))
             iii+=1
 
-for line in map:
-    print(line)
+#for line in map:
+#    print(line)
 
 # function to avoid falling off the map
 def areValid(i,j):
@@ -299,7 +299,7 @@ MIN_FONT = ""
 
 # self explainatory
 def drawMap(root):
-    canvas = tk.Canvas(root, width=MAPLEN*TILE_SIZE, height=MAPLEN*TILE_SIZE, bg="white")
+    canvas = tk.Canvas(root, width=(4+MAPLEN)*TILE_SIZE, height=MAPLEN*TILE_SIZE, bg="white")
     canvas.pack()
     for y in range(MAPLEN):
         for x in range(MAPLEN):
