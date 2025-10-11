@@ -21,16 +21,6 @@ let minions = Array.init nMinions (fun i ->
 let myID, myResources = input_line ptr |> String.split_on_char ' ' |> List.map int_of_string |> (function | (a::b::[]) -> a,b | _ -> failwith "invalid 3") in
 let baseX, baseY = input_line ptr |> String.split_on_char ' ' |> List.map int_of_string |> (function | (a::b::[]) -> a,b | _ -> failwith "invalid 4") in
 
-(*
-TYPE_MUR = 'W'
-TYPE_NORMAL = 'R'
-TYPE_DASH = 'D'
-TYPE_SHIELD = 'S'
-TYPE_FORCE = 'F'
-TYPE_MIDAS = 'M'
-TYPE_VITESSE = 'P'
-*)
-
 let is_valid i j =
   0 <= i && i < mapSize && 0 <= j && j < mapSize
 in
@@ -57,40 +47,6 @@ let bfs_simple (cond : int -> int -> string -> int -> int -> bool) (excl : int -
           let (ttype,tval,tmeta) = map.(cx).(cy) in
           if not (excl cx cy id ttype tval tmeta) && ttype <> "W" then begin
             if cond cx cy ttype tval tmeta then
-              raise (Found (mx,my));
-            if cx <> x0 || cy <> y0 then 
-              List.iter (fun (dx,dy) -> Queue.add (cx+dx,cy+dy,mx,my) q) order
-          end
-        end
-      end
-    done;
-    (*Printf.fprintf stderr "not found\n";*)
-    (x0,y0)
-  with
-    | Found (x,y) -> (x,y)
-in
-
-let bfs_noFarther (tx : int) (ty : int) (excl : int -> int -> int -> string -> int -> int -> bool) (x0 : int) (y0 : int) =
-  let visited = Hashtbl.create 100 in
-  let q = Queue.create () in
-
-  let id = Hashtbl.find friendlies (x0,y0) in
-
-  let closest = ref (abs (x0-tx) + abs(y0-ty)) in
-
-  Queue.add (x0,y0,x0,y0) q;
-  List.iter (fun (dx,dy) -> Queue.add (x0+dx,y0+dy,x0+dx,y0+dy) q) order;
-
-  try
-    while not (Queue.is_empty q) do
-      let (cx,cy,mx,my) = Queue.pop q in
-      if is_valid cx cy then begin
-        if Hashtbl.find_opt visited (cx,cy) = None then begin
-          Hashtbl.add visited (cx,cy) 1;
-          let dist = abs (cx-tx) + abs(cy-ty) in
-          let (ttype,tval,tmeta) = map.(cx).(cy) in
-          if not (excl cx cy id ttype tval tmeta) && ttype <> "W" && dist <= !closest then begin
-            if cx = tx && cy = ty then
               raise (Found (mx,my));
             if cx <> x0 || cy <> y0 then 
               List.iter (fun (dx,dy) -> Queue.add (cx+dx,cy+dy,mx,my) q) order
@@ -151,3 +107,13 @@ end;
 
 close_out ptrOut;
 close_in ptr
+
+(*
+TYPE_MUR = 'W'
+TYPE_NORMAL = 'R'
+TYPE_DASH = 'D'
+TYPE_SHIELD = 'S'
+TYPE_FORCE = 'F'
+TYPE_MIDAS = 'M'
+TYPE_VITESSE = 'P'
+*)
