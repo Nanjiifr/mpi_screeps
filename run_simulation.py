@@ -118,6 +118,10 @@ def targetMinionData(pl_i,xdest,ydest):
                 return p
     return -1
 
+# function to avoid falling off the map
+def areValid(i,j):
+    return 0 <= i < MAPLEN and 0 <= j < MAPLEN
+
 def read_player_data(pl_i):
     minionMoved={}      # to avoid moving the same minion mutiple times
     with open("answer.txt", "r") as file:
@@ -163,7 +167,7 @@ def read_player_data(pl_i):
                         else:
                             print(f"PUMP_EMPTY {x},{y}",file=logFile,end="\n")
 
-                    elif(abs(xdest-x)+abs(ydest-y)==1):
+                    elif(abs(xdest-x)+abs(ydest-y)==1 and areValid(xdest,ydest)):
                         # movement-based action
                         # move into the depot
                         if((xdest,ydest) == PLAYER_SPAWN[pl_i]):
@@ -305,14 +309,11 @@ TILE_SIZE=min(WIDTH//(MAPLEN+ADDTILE_R),HEIGHT//(MAPLEN+ADDTILE_B))
 SP_OFFSET=TILE_SIZE/6
 MN_OFFSET=TILE_SIZE/15
 
-# function to avoid falling off the map
-def areValid(i,j):
-    return 0 <= i < MAPLEN and 0 <= j < MAPLEN
-
 # text fonts for tkinter
 DIG_FONT = ""
 MIN_FONT = ""
 MI2_FONT = ""
+LEA_FONT = ""
 SCO_FONT = ""
 
 def refreshCanvas(root,oldCanvas):
@@ -321,6 +322,11 @@ def refreshCanvas(root,oldCanvas):
     canvas.pack()
 
     return canvas
+
+# some more graphics constants
+LEAD_BAR_H = (MAPLEN-2)*TILE_SIZE
+LEAD_BAR_W = 2*TILE_SIZE
+LEAD_BAR_OFF = TILE_SIZE//10
 
 # self explainatory
 def drawMap(root,canvas,curTurn):
@@ -393,11 +399,22 @@ def drawMap(root,canvas,curTurn):
     # current turn
     canvas.create_text(TILE_SIZE*(2+MAPLEN)//2,TILE_SIZE//2,text=str(curTurn)+"/"+str(MAX_TURNS),font=MIN_FONT,fill="#222222")
 
+    # leaderboard
+    maxScore=max(1,max(PLAYER_SCORE))
+    for p in range(N_PLAYERS):
+        x0 = (3+2*p+MAPLEN)*TILE_SIZE
+        bH = max(1,(LEAD_BAR_H*PLAYER_SCORE[p])//maxScore)
+
+        canvas.create_rectangle(x0,2*TILE_SIZE+(LEAD_BAR_H-bH),x0+LEAD_BAR_W,2*TILE_SIZE+LEAD_BAR_H,fill="#222222")
+        canvas.create_rectangle(x0+LEAD_BAR_OFF,LEAD_BAR_OFF+2*TILE_SIZE+(LEAD_BAR_H-bH),x0+LEAD_BAR_W-LEAD_BAR_OFF,2*TILE_SIZE+LEAD_BAR_H-LEAD_BAR_OFF,fill=PLAYER_COLOR[p])
+        canvas.create_text(x0+LEAD_BAR_W//2,LEAD_BAR_OFF+2*TILE_SIZE+(LEAD_BAR_H-bH)-TILE_SIZE//2,text=str(PLAYER_SCORE[p]),fill="#000000",font=LEA_FONT)
+
 turnOrder = [i for i in range(N_PLAYERS)]
 def mainLoop():
     global DIG_FONT
     global MIN_FONT
     global MI2_FONT
+    global LEA_FONT
     global SCO_FONT
     global root
 
@@ -408,6 +425,7 @@ def mainLoop():
     DIG_FONT = tk.font.Font(family = "Symbol", size = int(sizeMult*24))
     MIN_FONT = tk.font.Font(family = "monospace", size = int(15*sizeMult))
     MI2_FONT = tk.font.Font(family = "monospace", size = int(sizeMult*13))
+    LEA_FONT = tk.font.Font(family = "monospace", size = int(sizeMult*30))
     SCO_FONT = tk.font.Font(family = "Bold", size = int(sizeMult*20))
 
     canvas = tk.Canvas(root, width=WIDTH, height=HEIGHT, bg="white")
