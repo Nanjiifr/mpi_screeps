@@ -324,6 +324,7 @@ MN_OFFSET=TILE_SIZE/15
 DIG_FONT = ""
 MIN_FONT = ""
 MI2_FONT = ""
+NAM_FONT = ""
 LEA_FONT = ""
 SCO_FONT = ""
 
@@ -389,8 +390,9 @@ def drawMap(root,canvas,curTurn):
         canvas.create_rectangle((1+px)*TILE_SIZE,(1+py)*TILE_SIZE,(px+2)*TILE_SIZE,(py+2)*TILE_SIZE,fill=PLAYER_COLOR[i])
         dx=2*(1 if px>=MAPLEN//2 else -1)
         dy=2*(1 if py>=MAPLEN//2 else -1)
-        canvas.create_text((1+px+dx//2)*TILE_SIZE+TILE_SIZE//2,(1+py+dy)*TILE_SIZE+TILE_SIZE//2,text=str(PLAYER_SCORE[i])+" pts",fill="#000000",font=SCO_FONT)
+        canvas.create_text((1+px+3*dx/4)*TILE_SIZE+TILE_SIZE//2,(1+py+dy)*TILE_SIZE+TILE_SIZE//2,text=str(PLAYER_SCORE[i])+" pts",fill="#000000",font=SCO_FONT)
         canvas.create_text((1+px+dx)*TILE_SIZE+TILE_SIZE//2,(1+py+dy//2)*TILE_SIZE+TILE_SIZE//2,text=str(PLAYER_RSCS[i])+"$",fill="#000000",font=SCO_FONT)
+        canvas.create_text((1+px-dx//2)*TILE_SIZE+TILE_SIZE//2,(1+py+dy)*TILE_SIZE+TILE_SIZE//2,text=PLAYER_NAMES[i],fill="#000000",font=NAM_FONT)
 
     # minions
     for i in range(N_PLAYERS):
@@ -453,6 +455,7 @@ def mainLoop():
     global DIG_FONT
     global MIN_FONT
     global MI2_FONT
+    global NAM_FONT
     global LEA_FONT
     global SCO_FONT
     global root
@@ -465,6 +468,7 @@ def mainLoop():
     MIN_FONT = tk.font.Font(family = "monospace", size = int(15*sizeMult))
     MI2_FONT = tk.font.Font(family = "monospace", size = int(sizeMult*13))
     LEA_FONT = tk.font.Font(family = "monospace", size = int(sizeMult*30))
+    NAM_FONT = tk.font.Font(family = "Arial", size = int(sizeMult*12))
     SCO_FONT = tk.font.Font(family = "Bold", size = int(sizeMult*20))
 
     canvas = tk.Canvas(root, width=WIDTH, height=HEIGHT, bg="white")

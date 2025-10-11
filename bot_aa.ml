@@ -21,6 +21,8 @@ let minions = Array.init nMinions (fun i ->
 let myID, myResources = input_line ptr |> String.split_on_char ' ' |> List.map int_of_string |> (function | (a::b::[]) -> a,b | _ -> failwith "invalid 3") in
 let baseX, baseY = input_line ptr |> String.split_on_char ' ' |> List.map int_of_string |> (function | (a::b::[]) -> a,b | _ -> failwith "invalid 4") in
 
+Array.sort (fun m1 m2 -> abs(m2.x-baseX) + abs(m2.y-baseY) -(abs(m1.x-baseX) + abs(m1.y-baseY))) minions;
+
 let is_valid i j =
   0 <= i && i < mapSize && 0 <= j && j < mapSize
 in
