@@ -103,5 +103,5 @@ with open("mapData.txt") as mapFile:
                         carte[mX][mY][CASE_TYPE] = TYPE_NORMAL
                         carte[newX][newY][CASE_TYPE] = TYPE_MOI
                         print(mX, mY, newX, newY, file=reponse) # Se déplacer
-            
-        print("CREATE", 1, min(10, (ressActuelles-2)//2), 0, file=reponse)
+        if ressActuelles>4:
+            print("CREATE", 1, min(ressActuelles-1,10), 0, file=reponse)
