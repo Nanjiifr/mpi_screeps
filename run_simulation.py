@@ -310,56 +310,9 @@ MIN_FONT = ""
 MI2_FONT = ""
 SCO_FONT = ""
 
-# trying to avoid flickering
-canvasMap=[[0 for _ in range(MAPLEN)] for _ in range(MAPLEN)]
-canvasSP=[[0 for _ in range(MAPLEN)] for _ in range(MAPLEN)]
-canvasSPText=[[0 for _ in range(MAPLEN)] for _ in range(MAPLEN)]
-
-def initMap(root):
-    canvas = tk.Canvas(root, width=(4+2+MAPLEN)*TILE_SIZE, height=(2+MAPLEN)*TILE_SIZE, bg="white")
-    canvas.pack()
-
-    for x in range(MAPLEN):
-        for y in range(MAPLEN):
-            data=map[y][x]
-            val = data[1]
-            x0 = (1+x)*TILE_SIZE
-            y0 = (1+y)*TILE_SIZE
-            x1 = x0+TILE_SIZE
-            y1 = y0+TILE_SIZE
-            if data[0]=="WALL":
-                # wall
-                canvasMap[y][x] = canvas.create_rectangle(x0,y0,x1,y1,fill="gray20")
-            elif val>0:
-                green = int(255*val/10)
-                color = f"#00{green:02x}00"
-                canvasMap[y][x] = canvas.create_rectangle(x0,y0,x1,y1,fill=color)
-            else:
-                canvasMap[y][x] = canvas.create_rectangle(x0,y0,x1,y1,fill="white")
-
-            # special tiles
-            if(data[0]=="DASH"):
-                canvasSP[y][x] = canvas.create_rectangle(x0+SP_OFFSET,y0+SP_OFFSET,x1-SP_OFFSET,y1-SP_OFFSET,fill="#bb11bb")
-                canvasSPText[y][x] = canvas.create_text((x0+x1)//2,(y0+y1)//2,text=str(data[2]),fill="#ffffff",font=DIG_FONT)
-            elif(data[0]=="PROT"):
-                canvasSP[y][x] = canvas.create_rectangle(x0+SP_OFFSET,y0+SP_OFFSET,x1-SP_OFFSET,y1-SP_OFFSET,fill="#0000ff")
-                canvasSPText[y][x] = canvas.create_text((x0+x1)//2,(y0+y1)//2,text=str(data[2]),fill="#ffffff",font=DIG_FONT)
-            elif(data[0]=="BONK"):
-                canvasSP[y][x] = canvas.create_rectangle(x0+SP_OFFSET,y0+SP_OFFSET,x1-SP_OFFSET,y1-SP_OFFSET,fill="#ff0000")
-                canvasSPText[y][x] = canvas.create_text((x0+x1)//2,(y0+y1)//2,text=str(data[2]),font=DIG_FONT)
-            elif(data[0]=="GOLD"):
-                canvasSP[y][x] = canvas.create_rectangle(x0+SP_OFFSET,y0+SP_OFFSET,x1-SP_OFFSET,y1-SP_OFFSET,fill="#c0c001")
-                canvasSPText[y][x] = canvas.create_text((x0+x1)//2,(y0+y1)//2,text=str(data[2]),font=DIG_FONT)
-            elif(data[0]=="SPED"):
-                canvasSP[y][x] = canvas.create_rectangle(x0+SP_OFFSET,y0+SP_OFFSET,x1-SP_OFFSET,y1-SP_OFFSET,fill="#25ffff")
-                canvasSPText[y][x] = canvas.create_text((x0+x1)//2,(y0+y1)//2,text=str(data[2]),font=DIG_FONT)
-
-    return canvas
-
 # self explainatory
-def drawMap(root,curTurn):
-    canvas = tk.Canvas(root, width=(4+2+MAPLEN)*TILE_SIZE, height=(2+MAPLEN)*TILE_SIZE, bg="white")
-    canvas.pack()
+def drawMap(root,canvas,curTurn):
+    canvas.create_rectangle(0,0,(4+2+MAPLEN)*TILE_SIZE, (2+MAPLEN)*TILE_SIZE,fill="#ffffff")
 
     for i in range(N_PLAYERS):
         px,py=PLAYER_SPAWN[i]
@@ -424,13 +377,9 @@ def drawMap(root,curTurn):
             canvas.create_text((x0+x1)//2, (y0+y1)//2             ,text=str(atk)+" DMG",font=MI2_FONT)
             canvas.create_text((x0+x1)//2, (y0+y1)//2+TILE_SIZE//3,text=str(hp)+" HP",font=MI2_FONT)
 
-            
-    
     # metadata
     # current turn
     canvas.create_text((MAPLEN+3)*TILE_SIZE,3*TILE_SIZE,text=str(curTurn)+"/"+str(MAX_TURNS),font=MIN_FONT,fill="#222222")
-    
-    return canvas
 
 turnOrder = [i for i in range(N_PLAYERS)]
 def mainLoop():
@@ -438,15 +387,22 @@ def mainLoop():
     global MIN_FONT
     global MI2_FONT
     global SCO_FONT
+
+    currentTurn=0
     root = tk.Tk()
+    root.title("Moteur Screeps simplifié")
+
     DIG_FONT = tk.font.Font(family = "Symbol", size = 24)
     MIN_FONT = tk.font.Font(family = "monospace", size = 15)
     MI2_FONT = tk.font.Font(family = "monospace", size = 13)
     SCO_FONT = tk.font.Font(family = "Bold", size = 20)
-    root.title("Moteur Screeps simplifié")
-    currentTurn=0
-    canvas = initMap(root)
+
+    canvas = tk.Canvas(root, width=(4+2+MAPLEN)*TILE_SIZE, height=(2+MAPLEN)*TILE_SIZE, bg="white")
+    canvas.pack()
+
+    drawMap(root,canvas,currentTurn)
     root.update()
+
     while(currentTurn < MAX_TURNS):
         # turn order is randomized
         random.shuffle(turnOrder)
@@ -458,8 +414,7 @@ def mainLoop():
 
         # log the end of the turn + update the canvas
         print("",file=logFile)
-        canvas.destroy()
-        canvas = drawMap(root,currentTurn)
+        drawMap(root,canvas,currentTurn)
         root.update()
 
         # sleep
