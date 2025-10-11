@@ -17,7 +17,7 @@ try:
     N,avg,std,midbuff,sp = int(N),float(avg),float(std),float(midbuff),float(sp)
     
     # build walls (all coords here should be between 0 and N-1)
-    walls = [[3, 0], [3, 1], [0, 3], [1, 3]]
+    walls = [[4, 0], [4, 1], [0, 4], [1, 4]]
 
     # out file
     f=open(filename,"w")

@@ -189,7 +189,8 @@ def read_player_data(pl_i):
 
                         else:
                             # empty space
-                            if(targetMinionData(pl_i,xdest,ydest) == -1):
+                            target=targetMinionData(pl_i,xdest,ydest)
+                            if(target == -1):
                                 if(map[xdest][ydest][0] != "WALL"): # not moving into a wall
                                     minCpy = [minData[0],minData[1],minData[2],minData[3]]
                                     del PLAYER_MINIONS[pl_i][(x,y)]
@@ -201,8 +202,12 @@ def read_player_data(pl_i):
 
                             # attack
                             else:
-                                minionMoved[(x,y)]=True # depends on kill
-                                print(f"ATTACK {x},{y},{xdest},{ydest}",file=logFile,end="\n")
+                                minHit=PLAYER_MINIONS[target][(xdest,ydest)]
+                                if(minHit[1] > minData[3]):
+                                    # if it didnt kill, it counts as a move
+                                    minionMoved[(x,y)]=True
+                                minHit[1] -= minData[3]
+                                print(f"ATTACK {x},{y},{xdest},{ydest},{minData[3]}",file=logFile,end="\n")
 
                     else:
                         # invalid
