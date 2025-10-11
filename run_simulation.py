@@ -22,10 +22,10 @@ except:
 map = []
 ''' map = (string * int * int | int array) array array --> (tileName, resource, tileMeta) '''
 
-# graphics constant
+#graphics constant
 WIDTH=1000
 HEIGHT=800
-TILE_SIZE=65
+TILE_SIZE=60
 SP_OFFSET=TILE_SIZE/6
 MN_OFFSET=TILE_SIZE/15
 PLAYER_COLOR = ["#dd0000", "#dddd00", "#00dd00", "#6666ff"]
@@ -127,9 +127,9 @@ def read_player_data(pl_i):
                 hp,size,atk=int(hp),int(size),int(atk)
                 if(hp>0 and size>=0 and atk >=0):
                     if(not (PLAYER_SPAWN[pl_i] in PLAYER_MINIONS[pl_i].keys())):   # check if spawn is free
-                        if(PLAYER_RSCS[pl_i] >= 2*hp + 2*size + atk):       # check is the player has enough resources
+                        if(PLAYER_RSCS[pl_i] >= hp + size + atk):       # check is the player has enough resources
                             PLAYER_MINIONS[pl_i][PLAYER_SPAWN[pl_i]] = [0,2*hp,2*size,atk]
-                            PLAYER_RSCS[pl_i] -= 2*hp + 2*size + atk
+                            PLAYER_RSCS[pl_i] -= hp + size + atk
                             minionMoved[PLAYER_SPAWN[pl_i]]=True
                             print(f"NEW_MINION {hp},{size},{atk}",file=logFile,end="\n")
                         else:
@@ -174,6 +174,7 @@ def read_player_data(pl_i):
                         elif((xdest,ydest) in PLAYER_MINIONS[pl_i].keys()):
                             minTarget=PLAYER_MINIONS[pl_i][(xdest,ydest)]
                             toTransfer=min(minData[0],minTarget[2]-minTarget[0])
+                            #print(minData[0],minTarget[2]-minTarget[0])
                             minData[0] -= toTransfer
                             minTarget[0] += toTransfer
                             minionMoved[(x,y)]=True
@@ -309,6 +310,52 @@ MIN_FONT = ""
 MI2_FONT = ""
 SCO_FONT = ""
 
+# trying to avoid flickering
+canvasMap=[[0 for _ in range(MAPLEN)] for _ in range(MAPLEN)]
+canvasSP=[[0 for _ in range(MAPLEN)] for _ in range(MAPLEN)]
+canvasSPText=[[0 for _ in range(MAPLEN)] for _ in range(MAPLEN)]
+
+def initMap(root):
+    canvas = tk.Canvas(root, width=(4+2+MAPLEN)*TILE_SIZE, height=(2+MAPLEN)*TILE_SIZE, bg="white")
+    canvas.pack()
+
+    for x in range(MAPLEN):
+        for y in range(MAPLEN):
+            data=map[y][x]
+            val = data[1]
+            x0 = (1+x)*TILE_SIZE
+            y0 = (1+y)*TILE_SIZE
+            x1 = x0+TILE_SIZE
+            y1 = y0+TILE_SIZE
+            if data[0]=="WALL":
+                # wall
+                canvasMap[y][x] = canvas.create_rectangle(x0,y0,x1,y1,fill="gray20")
+            elif val>0:
+                green = int(255*val/10)
+                color = f"#00{green:02x}00"
+                canvasMap[y][x] = canvas.create_rectangle(x0,y0,x1,y1,fill=color)
+            else:
+                canvasMap[y][x] = canvas.create_rectangle(x0,y0,x1,y1,fill="white")
+
+            # special tiles
+            if(data[0]=="DASH"):
+                canvasSP[y][x] = canvas.create_rectangle(x0+SP_OFFSET,y0+SP_OFFSET,x1-SP_OFFSET,y1-SP_OFFSET,fill="#bb11bb")
+                canvasSPText[y][x] = canvas.create_text((x0+x1)//2,(y0+y1)//2,text=str(data[2]),fill="#ffffff",font=DIG_FONT)
+            elif(data[0]=="PROT"):
+                canvasSP[y][x] = canvas.create_rectangle(x0+SP_OFFSET,y0+SP_OFFSET,x1-SP_OFFSET,y1-SP_OFFSET,fill="#0000ff")
+                canvasSPText[y][x] = canvas.create_text((x0+x1)//2,(y0+y1)//2,text=str(data[2]),fill="#ffffff",font=DIG_FONT)
+            elif(data[0]=="BONK"):
+                canvasSP[y][x] = canvas.create_rectangle(x0+SP_OFFSET,y0+SP_OFFSET,x1-SP_OFFSET,y1-SP_OFFSET,fill="#ff0000")
+                canvasSPText[y][x] = canvas.create_text((x0+x1)//2,(y0+y1)//2,text=str(data[2]),font=DIG_FONT)
+            elif(data[0]=="GOLD"):
+                canvasSP[y][x] = canvas.create_rectangle(x0+SP_OFFSET,y0+SP_OFFSET,x1-SP_OFFSET,y1-SP_OFFSET,fill="#c0c001")
+                canvasSPText[y][x] = canvas.create_text((x0+x1)//2,(y0+y1)//2,text=str(data[2]),font=DIG_FONT)
+            elif(data[0]=="SPED"):
+                canvasSP[y][x] = canvas.create_rectangle(x0+SP_OFFSET,y0+SP_OFFSET,x1-SP_OFFSET,y1-SP_OFFSET,fill="#25ffff")
+                canvasSPText[y][x] = canvas.create_text((x0+x1)//2,(y0+y1)//2,text=str(data[2]),font=DIG_FONT)
+
+    return canvas
+
 # self explainatory
 def drawMap(root,curTurn):
     canvas = tk.Canvas(root, width=(4+2+MAPLEN)*TILE_SIZE, height=(2+MAPLEN)*TILE_SIZE, bg="white")
@@ -319,8 +366,8 @@ def drawMap(root,curTurn):
         canvas.create_rectangle((px+1-2)*TILE_SIZE,(py+1-2)*TILE_SIZE,(px+1+3)*TILE_SIZE,(py+1+3)*TILE_SIZE,fill=PLAYER_COLOR[i])
 
     # map
-    for y in range(MAPLEN):
-        for x in range(MAPLEN):
+    for x in range(MAPLEN):
+        for y in range(MAPLEN):
             data=map[y][x]
             val = data[1]
             x0 = (1+x)*TILE_SIZE
@@ -367,8 +414,8 @@ def drawMap(root,curTurn):
     for i in range(N_PLAYERS):
         minionList=PLAYER_MINIONS[i]
         for (x,y),(cap,hp,size,atk) in minionList.items():
-            x0 = (1+x)*TILE_SIZE
-            y0 = (1+y)*TILE_SIZE
+            x0 = (1+y)*TILE_SIZE
+            y0 = (1+x)*TILE_SIZE
             x1 = x0+TILE_SIZE
             y1 = y0+TILE_SIZE
 
@@ -398,7 +445,7 @@ def mainLoop():
     SCO_FONT = tk.font.Font(family = "Bold", size = 20)
     root.title("Moteur Screeps simplifié")
     currentTurn=0
-    canvas = drawMap(root,currentTurn)
+    canvas = initMap(root)
     root.update()
     while(currentTurn < MAX_TURNS):
         # turn order is randomized
