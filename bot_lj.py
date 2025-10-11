@@ -58,7 +58,7 @@ with open("mapData.txt") as mapFile:
                     cands = []
                     if mX < depotX:
                         cands.append([mX+1, mY])
-                    elif mx > depotX:
+                    elif mX > depotX:
                         cands.append([mX-1, mY])
                     if mY < depotY:
                         cands.append([mX, mY+1])
@@ -71,7 +71,8 @@ with open("mapData.txt") as mapFile:
                         print(mX, mY, mX, mY, file=reponse) # Pomper
                     else:
                         cands = [(mX-1, mY), (mX+1, mY), (mX, mY-1), (mX, mY+1)]
-                        newX, newY = max(zip(map(cands,lambda c:carte[c[0]][c[1]]), cands))[1]
+                        cands = filter(lambda c:c[0]>=0 and c[1]>=0 and c[0]<n and c[1]<n, cands)
+                        newX, newY = max(zip(map(lambda c:carte[c[0]][c[1]], cands), cands))[1]
                         print(mX, mY, newX, newY, file=reponse) # Se déplacer
             
-        print("CREATE", 1, min(10, ressActuelles-1), 0, file=reponse)
+        print("CREATE", 1, min(10, (ressActuelles-2)//2), 0, file=reponse)
