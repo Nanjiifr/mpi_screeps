@@ -32,10 +32,12 @@ HEIGHT=root.winfo_screenheight()
 ADDTILE_R=5
 ADDTILE_B=4
 PLAYER_COLOR = ["#dd0000", "#dddd00", "#00dd00", "#6666ff"]
+PLAYER_COLOR_2 = ["#dd8888", "#dddd88", "#88dd88", "#aaaaff"]
 DT=0.25
 
 # player-related constants
 PLAYER_RSCS = [20 for i in range(N_PLAYERS)]
+PLAYER_CARRY = [0 for i in range(N_PLAYERS)]
 PLAYER_SCORE = [0 for i in range(N_PLAYERS)]
 PLAYER_SPAWN = []
 PLAYER_MINIONS=[{} for _ in range(N_PLAYERS)]
@@ -162,6 +164,7 @@ def read_player_data(pl_i):
                         if(tile[1] > 0 and minData[0] < minData[2]):
                             map[x][y] = (tile[0],tile[1]-1,tile[2])
                             minData[0] += 1
+                            PLAYER_CARRY[pl_i]+=1
                             minionMoved[(x,y)]=True
                             print(f"PUMP {x},{y}",file=logFile,end="\n")
                         else:
@@ -174,6 +177,7 @@ def read_player_data(pl_i):
                             print(f"DEPOSIT {x},{y},{minData[0]}",file=logFile,end="\n")
                             PLAYER_SCORE[pl_i] += minData[0]
                             PLAYER_RSCS[pl_i] += minData[0]
+                            PLAYER_CARRY[pl_i]-=minData[0]
                             minionMoved[(x,y)]=True
                             minData[0] = 0
 
@@ -247,12 +251,14 @@ def execute_player(pl_i):
 
 # remove all players with HP<=0
 def killDeadMinions():
-    for minionList in PLAYER_MINIONS:
+    for p in range(len(PLAYER_MINIONS)):
+        minionList=PLAYER_MINIONS[p]
         toDel=[]
         for (x,y),(cap,hp,_,_) in minionList.items():
             if(hp <= 0):
                 toAddTile=map[x][y]
                 map[x][y] = (toAddTile[0],min(10,toAddTile[1]+cap),toAddTile[2])
+                PLAYER_CARRY[p]-=cap
                 toDel.append((x,y))
         for (x,y) in toDel:
             del minionList[(x,y)]
@@ -329,9 +335,9 @@ def refreshCanvas(root,oldCanvas):
     return canvas
 
 # some more graphics constants
-LEAD_BAR_H = (MAPLEN-2)*TILE_SIZE
-LEAD_BAR_W = 2*TILE_SIZE
-LEAD_BAR_OFF = TILE_SIZE//10
+LB_H = (MAPLEN-2)*TILE_SIZE
+LB_W = 2*TILE_SIZE
+LB_OFF = TILE_SIZE//10
 
 # self explainatory
 def drawMap(root,canvas,curTurn):
@@ -405,14 +411,42 @@ def drawMap(root,canvas,curTurn):
     canvas.create_text(TILE_SIZE*(2+MAPLEN)//2,TILE_SIZE//2,text=str(curTurn)+"/"+str(MAX_TURNS),font=MIN_FONT,fill="#222222")
 
     # leaderboard
-    maxScore=max(1,max(PLAYER_SCORE))
+    maxStat=max(1,max([x+y for x, y in zip(PLAYER_SCORE, PLAYER_CARRY)]))
     for p in range(N_PLAYERS):
+        bH = max(1,(LB_H*PLAYER_SCORE[p])//maxStat)
+        bI = max(0,(LB_H*PLAYER_CARRY[p])//maxStat)
         x0 = (3+2*p+MAPLEN)*TILE_SIZE
-        bH = max(1,(LEAD_BAR_H*PLAYER_SCORE[p])//maxScore)
+        y0 = 2*TILE_SIZE+(LB_H-bH-bI)
 
-        canvas.create_rectangle(x0,2*TILE_SIZE+(LEAD_BAR_H-bH),x0+LEAD_BAR_W,2*TILE_SIZE+LEAD_BAR_H,fill="#222222")
-        canvas.create_rectangle(x0+LEAD_BAR_OFF,LEAD_BAR_OFF+2*TILE_SIZE+(LEAD_BAR_H-bH),x0+LEAD_BAR_W-LEAD_BAR_OFF,2*TILE_SIZE+LEAD_BAR_H-LEAD_BAR_OFF,fill=PLAYER_COLOR[p])
-        canvas.create_text(x0+LEAD_BAR_W//2,LEAD_BAR_OFF+2*TILE_SIZE+(LEAD_BAR_H-bH)-TILE_SIZE//2,text=str(PLAYER_SCORE[p]),fill="#000000",font=LEA_FONT)
+        canvas.create_rectangle(
+            x0,
+            y0,
+            x0+LB_W,
+            y0+bH+bI,
+            fill="#222222")
+        canvas.create_rectangle(
+            x0+LB_OFF,
+            y0+bI,
+            x0+LB_W-LB_OFF,
+            y0+bH+bI,
+            fill=PLAYER_COLOR[p])
+        canvas.create_rectangle(
+            x0+LB_OFF,
+            y0,
+            x0+LB_W-LB_OFF,
+            y0+bI,
+            fill=PLAYER_COLOR_2[p])
+        canvas.create_text(
+            x0+LB_W//2,
+            LB_OFF+y0+bI-TILE_SIZE//2,
+            text=str(PLAYER_SCORE[p]),
+            fill="#000000",font=LEA_FONT)
+        if(PLAYER_CARRY[p] > 0):
+            canvas.create_text(
+                x0+LB_W//2,
+                LB_OFF+y0-TILE_SIZE//2,
+                text="+"+str(PLAYER_CARRY[p]),
+                fill="#333333",font=LEA_FONT)
 
 turnOrder = [i for i in range(N_PLAYERS)]
 def mainLoop():
@@ -440,6 +474,7 @@ def mainLoop():
     root.update()
 
     while(currentTurn < MAX_TURNS):
+        st = time.time()
         # turn order is randomized
         random.shuffle(turnOrder)
         for p in turnOrder:
@@ -457,9 +492,11 @@ def mainLoop():
         root.update()
 
         # sleep
-        time.sleep(DT)
+        et = time.time()
+        time.sleep(max(0.0, DT-(et-st)))
 
         # end the turn
+        print(et-st)
         currentTurn += 1
 
     logFile.close()
