@@ -23,11 +23,12 @@ map = []
 ''' map = (string * int * int | int array) array array --> (tileName, resource, tileMeta) '''
 
 #graphics constant
-WIDTH=1000
-HEIGHT=800
-TILE_SIZE=60
-SP_OFFSET=TILE_SIZE/6
-MN_OFFSET=TILE_SIZE/15
+''' Change your monitor resolution here '''
+WIDTH=1920
+HEIGHT=1080
+''' Change your monitor resolution here '''
+ADDTILE_R=4
+ADDTILE_B=3
 PLAYER_COLOR = ["#dd0000", "#dddd00", "#00dd00", "#6666ff"]
 DT=0.5
 
@@ -297,8 +298,10 @@ with open(MAPNAME) as file:
 
 for (x,y) in PLAYER_SPAWN:
     map[x][y] = ("RESO",0,0)
-#for line in map:
-#    print(line)
+
+TILE_SIZE=min(WIDTH//(MAPLEN+ADDTILE_R),HEIGHT//(MAPLEN+ADDTILE_B))
+SP_OFFSET=TILE_SIZE/6
+MN_OFFSET=TILE_SIZE/15
 
 # function to avoid falling off the map
 def areValid(i,j):
@@ -312,10 +315,10 @@ SCO_FONT = ""
 
 # self explainatory
 def drawMap(root,canvas,curTurn):
-    canvas.create_rectangle(0,0,(4+2+MAPLEN)*TILE_SIZE, (2+MAPLEN)*TILE_SIZE,fill="#ffffff")
+    canvas.create_rectangle(0,0,WIDTH,HEIGHT,fill="#dddddd")
 
     for i in range(N_PLAYERS):
-        px,py=PLAYER_SPAWN[i]
+        py,px=PLAYER_SPAWN[i]
         canvas.create_rectangle((px+1-2)*TILE_SIZE,(py+1-2)*TILE_SIZE,(px+1+3)*TILE_SIZE,(py+1+3)*TILE_SIZE,fill=PLAYER_COLOR[i])
 
     # map
@@ -356,7 +359,7 @@ def drawMap(root,canvas,curTurn):
                 
     # data for each player
     for i in range(N_PLAYERS):
-        px,py=PLAYER_SPAWN[i]
+        py,px=PLAYER_SPAWN[i]
         canvas.create_rectangle((1+px)*TILE_SIZE,(1+py)*TILE_SIZE,(px+2)*TILE_SIZE,(py+2)*TILE_SIZE,fill=PLAYER_COLOR[i])
         dx=2*(1 if px>=MAPLEN//2 else -1)
         dy=2*(1 if py>=MAPLEN//2 else -1)
@@ -379,7 +382,7 @@ def drawMap(root,canvas,curTurn):
 
     # metadata
     # current turn
-    canvas.create_text((MAPLEN+3)*TILE_SIZE,3*TILE_SIZE,text=str(curTurn)+"/"+str(MAX_TURNS),font=MIN_FONT,fill="#222222")
+    canvas.create_text(TILE_SIZE*(2+MAPLEN)//2,TILE_SIZE//2,text=str(curTurn)+"/"+str(MAX_TURNS),font=MIN_FONT,fill="#222222")
 
 turnOrder = [i for i in range(N_PLAYERS)]
 def mainLoop():
@@ -397,7 +400,7 @@ def mainLoop():
     MI2_FONT = tk.font.Font(family = "monospace", size = 13)
     SCO_FONT = tk.font.Font(family = "Bold", size = 20)
 
-    canvas = tk.Canvas(root, width=(4+2+MAPLEN)*TILE_SIZE, height=(2+MAPLEN)*TILE_SIZE, bg="white")
+    canvas = tk.Canvas(root, width=WIDTH, height=HEIGHT, bg="white")
     canvas.pack()
 
     drawMap(root,canvas,currentTurn)
