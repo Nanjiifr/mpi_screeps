@@ -32,7 +32,7 @@ HEIGHT=root.winfo_screenheight()
 ADDTILE_R=5
 ADDTILE_B=4
 PLAYER_COLOR = ["#dd0000", "#dddd00", "#00dd00", "#6666ff"]
-DT=0.5
+DT=0.25
 
 # player-related constants
 PLAYER_RSCS = [20 for i in range(N_PLAYERS)]
@@ -315,8 +315,15 @@ MIN_FONT = ""
 MI2_FONT = ""
 SCO_FONT = ""
 
+def refreshCanvas(root,oldCanvas):
+    oldCanvas.destroy()
+    canvas = tk.Canvas(root, width=WIDTH, height=HEIGHT, bg="white")
+    canvas.pack()
+
+    return canvas
+
 # self explainatory
-def drawMap(canvas,curTurn):
+def drawMap(root,canvas,curTurn):
     canvas.create_rectangle(0,0,WIDTH,HEIGHT,fill="#dddddd")
 
     for i in range(N_PLAYERS):
@@ -406,7 +413,7 @@ def mainLoop():
     canvas = tk.Canvas(root, width=WIDTH, height=HEIGHT, bg="white")
     canvas.pack()
 
-    drawMap(canvas,currentTurn)
+    drawMap(root,canvas,currentTurn)
     root.update()
 
     while(currentTurn < MAX_TURNS):
@@ -420,7 +427,10 @@ def mainLoop():
 
         # log the end of the turn + update the canvas
         print("",file=logFile)
-        drawMap(canvas,currentTurn)
+        if(currentTurn%16==15):
+            canvas = refreshCanvas(root,canvas)
+        
+        drawMap(root,canvas,currentTurn)
         root.update()
 
         # sleep
