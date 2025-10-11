@@ -22,13 +22,15 @@ except:
 map = []
 ''' map = (string * int * int | int array) array array --> (tileName, resource, tileMeta) '''
 
+root = tk.Tk()
+
 #graphics constant
 ''' Change your monitor resolution here '''
-WIDTH=1920
-HEIGHT=1080
+WIDTH=root.winfo_screenwidth()
+HEIGHT=root.winfo_screenheight()
 ''' Change your monitor resolution here '''
-ADDTILE_R=4
-ADDTILE_B=3
+ADDTILE_R=5
+ADDTILE_B=4
 PLAYER_COLOR = ["#dd0000", "#dddd00", "#00dd00", "#6666ff"]
 DT=0.5
 
@@ -314,7 +316,7 @@ MI2_FONT = ""
 SCO_FONT = ""
 
 # self explainatory
-def drawMap(root,canvas,curTurn):
+def drawMap(canvas,curTurn):
     canvas.create_rectangle(0,0,WIDTH,HEIGHT,fill="#dddddd")
 
     for i in range(N_PLAYERS):
@@ -390,20 +392,21 @@ def mainLoop():
     global MIN_FONT
     global MI2_FONT
     global SCO_FONT
+    global root
 
     currentTurn=0
-    root = tk.Tk()
     root.title("Moteur Screeps simplifié")
 
-    DIG_FONT = tk.font.Font(family = "Symbol", size = 24)
-    MIN_FONT = tk.font.Font(family = "monospace", size = 15)
-    MI2_FONT = tk.font.Font(family = "monospace", size = 13)
-    SCO_FONT = tk.font.Font(family = "Bold", size = 20)
+    sizeMult=14/MAPLEN
+    DIG_FONT = tk.font.Font(family = "Symbol", size = int(sizeMult*24))
+    MIN_FONT = tk.font.Font(family = "monospace", size = int(15*sizeMult))
+    MI2_FONT = tk.font.Font(family = "monospace", size = int(sizeMult*13))
+    SCO_FONT = tk.font.Font(family = "Bold", size = int(sizeMult*20))
 
     canvas = tk.Canvas(root, width=WIDTH, height=HEIGHT, bg="white")
     canvas.pack()
 
-    drawMap(root,canvas,currentTurn)
+    drawMap(canvas,currentTurn)
     root.update()
 
     while(currentTurn < MAX_TURNS):
@@ -417,7 +420,7 @@ def mainLoop():
 
         # log the end of the turn + update the canvas
         print("",file=logFile)
-        drawMap(root,canvas,currentTurn)
+        drawMap(canvas,currentTurn)
         root.update()
 
         # sleep
