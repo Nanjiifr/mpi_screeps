@@ -1,6 +1,3 @@
 carte.*
 outMap*
-logFile.txt
-mapData.txt
-answer.txt
-maptest.txt
+*.txt
