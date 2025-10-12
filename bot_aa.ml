@@ -97,6 +97,8 @@ Array.iteri (fun i minion ->
         Printf.fprintf ptrOut "%d %d %d %d\n" minion.x minion.y tx ty
       end else begin
         let (tx,ty) = bfs_simple money_finder collide minion.x minion.y in
+        let (tp,_,mt) = map.(tx).(ty) in
+        map.(tx).(ty) <- (tp,0,mt);
         Printf.fprintf ptrOut "%d %d %d %d\n" minion.x minion.y tx ty
       end
     end
