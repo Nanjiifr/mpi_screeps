@@ -211,6 +211,7 @@ def read_player_data(pl_i):
                                     # if it didnt kill, it counts as a move
                                     minionMoved[(x,y)]=True
                                 minHit[1] -= minData[3]
+                                minData[1] -= minHit[3]
                                 print(f"ATTACK {x},{y},{xdest},{ydest},{minData[3]}",file=logFile,end="\n")
 
                     else:
