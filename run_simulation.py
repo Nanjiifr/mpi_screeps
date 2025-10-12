@@ -329,7 +329,6 @@ def killDeadMinions():
                 PLAYER_CARRY[p]-=cap
                 toDel.append((x,y))
         for (x,y) in toDel:
-            print("-1")
             del minionList[(x,y)]
 
 # .isdigit() but for relative numbers as well
