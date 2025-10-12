@@ -155,10 +155,11 @@ def applyBonus(pl_i,x0,y0,xd,yd,mved):
         minCpy = [minData[0],minData[1],minData[2],minData[3]]
         del PLAYER_MINIONS[pl_i][(xd,yd)]
         PLAYER_MINIONS[pl_i][(curX,curY)] = minCpy
-        mved[(curX,curY)]=True
 
         if(curX != xd or curY != yd):
-            applyBonus(pl_i,curX-Dx,curY-Dy,curX,curY)
+            applyBonus(pl_i,curX-Dx,curY-Dy,curX,curY,mved)
+        else:
+            mved[(curX,curY)]=True
 
 
     elif(tile[0]=="PROT"):
