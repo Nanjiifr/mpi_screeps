@@ -157,6 +157,9 @@ def applyBonus(pl_i,x0,y0,xd,yd,mved):
         PLAYER_MINIONS[pl_i][(curX,curY)] = minCpy
         mved[(curX,curY)]=True
 
+        if(curX != xd or curY != yd):
+            applyBonus(pl_i,curX-Dx,curY-Dy,curX,curY)
+
 
     elif(tile[0]=="PROT"):
         # more HP
@@ -535,6 +538,10 @@ def drawMap(root,canvas,curTurn):
                 LB_OFF+y0-TILE_SIZE//2,
                 text="+"+str(PLAYER_CARRY[p]),
                 fill="#333333",font=LEA_FONT)
+
+# random events
+def randomEvent(curTurn):
+    pass
 
 turnOrder = [i for i in range(N_PLAYERS)]
 def mainLoop():
