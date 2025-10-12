@@ -569,9 +569,8 @@ def mainLoop():
         random.shuffle(turnOrder)
         for p in turnOrder:
             execute_player(p)
-
-        # kill
-        killDeadMinions()
+            # kill
+            killDeadMinions()
 
         # log the end of the turn + update the canvas
         print("",file=logFile)
