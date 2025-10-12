@@ -586,7 +586,7 @@ def mainLoop():
         time.sleep(max(0.0, DT-(et-st)))
 
         # end the turn
-        print(et-st)
+        # print(et-st)
         currentTurn += 1
 
     logFile.close()
