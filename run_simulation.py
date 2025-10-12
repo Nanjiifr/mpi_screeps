@@ -33,7 +33,7 @@ ADDTILE_R=5
 ADDTILE_B=4
 PLAYER_COLOR = ["#dd0000", "#dddd00", "#00dd00", "#6666ff"]
 PLAYER_COLOR_2 = ["#dd8888", "#dddd88", "#88dd88", "#aaaaff"]
-DT=0.25
+DT=0.2
 
 # player-related constants
 PLAYER_RSCS = [20 for i in range(N_PLAYERS)]
@@ -124,6 +124,71 @@ def targetMinionData(pl_i,xdest,ydest):
 def areValid(i,j):
     return 0 <= i < MAPLEN and 0 <= j < MAPLEN
 
+def applyBonus(pl_i,x0,y0,xd,yd,mved):
+    minData=PLAYER_MINIONS[pl_i][(xd,yd)]
+    tile=map[xd][yd]
+    if(tile[0]=="DASH"):
+        # repeat movement
+        print(f">>> DASH {tile[2]}",file=logFile)
+        print(f"[{pl_i}] ",file=logFile,end="")
+        Dx=xd-x0
+        Dy=yd-y0
+        curX=xd
+        curY=yd
+        for _ in range(tile[2]):
+            target=targetMinionData(pl_i,curX+Dx,curY+Dy)
+            if((curX+Dx,curY+Dy) in PLAYER_MINIONS[pl_i].keys()):
+                # dont forget to put this piece of sh*t before the second condition, otherwise minions will merge and break everything >:/
+                # transfer
+                minTarget=PLAYER_MINIONS[pl_i][(curX+Dx,curY+Dy)]
+                toTransfer=min(minData[0],minTarget[2]-minTarget[0])
+                minData[0] -= toTransfer
+                minTarget[0] += toTransfer
+            elif(target == -1):
+                # move
+                curX += Dx
+                curY += Dy
+            else:
+                # attack (ONE-SIDED)
+                minHit=PLAYER_MINIONS[target][(curX+Dx,curY+Dy)]
+                minHit[1] -= minData[3]
+        minCpy = [minData[0],minData[1],minData[2],minData[3]]
+        del PLAYER_MINIONS[pl_i][(xd,yd)]
+        PLAYER_MINIONS[pl_i][(curX,curY)] = minCpy
+        mved[(curX,curY)]=True
+
+
+    elif(tile[0]=="PROT"):
+        # more HP
+        print(f">>> PROT {tile[2]}",file=logFile)
+        print(f"[{pl_i}] ",file=logFile,end="")
+        minData[1]+=tile[2]
+        map[xd][yd]=("RESO",tile[1],0)
+
+    elif(tile[0]=="BONK"):
+        # more damage
+        print(f">>> BONK {tile[2]}",file=logFile)
+        print(f"[{pl_i}] ",file=logFile,end="")
+        minData[3]+=tile[2]
+        map[xd][yd]=("RESO",tile[1],0)
+
+    elif(tile[0]=="GOLD"):
+        print(f">>> GOLD {tile[2]}",file=logFile)
+        print(f"[{pl_i}] ",file=logFile,end="")
+        # replenish nearby tiles
+        for dx in range(-2,3):
+            for dy in range(-2,3):
+                nx=xd+dx
+                ny=yd+dy
+                if(areValid(nx,ny)):
+                    tl = map[nx][ny]
+                    map[nx][ny] = (tl[0],min(10,tl[1]+tile[2]),tl[2])
+        map[xd][yd]=("RESO",tile[1],0)
+
+    elif(tile[0]=="SPED"):
+        # todo #
+        pass
+
 def read_player_data(pl_i):
     minionMoved={}      # to avoid moving the same minion mutiple times
     with open("answer.txt", "r") as file:
@@ -200,6 +265,7 @@ def read_player_data(pl_i):
                                     del PLAYER_MINIONS[pl_i][(x,y)]
                                     PLAYER_MINIONS[pl_i][(xdest,ydest)] = minCpy
                                     minionMoved[(xdest,ydest)]=True
+                                    applyBonus(pl_i,x,y,xdest,ydest,minionMoved)
                                     print(f"MOVE {x},{y},{xdest},{ydest}",file=logFile,end="\n")
                                 else:
                                     print(f"BONKED {x},{y},{xdest},{ydest}",file=logFile,end="\n")
@@ -244,9 +310,10 @@ def execute_player(pl_i):
         print(f"Error while executing player {pl_i}'s code ({PLAYER_NAMES[pl_i]}).",file=sys.stderr)
 
     if(execGood):
-        #read_player_data(pl_i)
+        read_player_data(pl_i)
         try:
-            read_player_data(pl_i)
+            pass
+            #read_player_data(pl_i)
         except:
             print(f"Error while reading data for player {pl_i}.",file=sys.stderr)
 
@@ -262,6 +329,7 @@ def killDeadMinions():
                 PLAYER_CARRY[p]-=cap
                 toDel.append((x,y))
         for (x,y) in toDel:
+            print("-1")
             del minionList[(x,y)]
 
 # .isdigit() but for relative numbers as well
@@ -289,7 +357,8 @@ def toTileName(str):
         print(str + ": unrecognized tile.",file=sys.stderr)
         assert 0
 
-# parsing the data
+# ------------------------ parsing the data ------------------------ #
+
 iii=0
 with open(MAPNAME) as file:
     fst=True
@@ -340,6 +409,7 @@ def refreshCanvas(root,oldCanvas):
 LB_H = (MAPLEN-2)*TILE_SIZE
 LB_W = 2*TILE_SIZE
 LB_OFF = TILE_SIZE//10
+WOFFS=150
 
 # self explainatory
 def drawMap(root,canvas,curTurn):
@@ -384,6 +454,22 @@ def drawMap(root,canvas,curTurn):
             elif(data[0]=="SPED"):
                 canvas.create_rectangle(x0+SP_OFFSET,y0+SP_OFFSET,x1-SP_OFFSET,y1-SP_OFFSET,fill="#25ffff")
                 canvas.create_text((x0+x1)//2,(y0+y1)//2,text=str(data[2]),font=DIG_FONT)
+
+    # special tiles
+    canvas.create_rectangle(WIDTH-WOFFS,2*TILE_SIZE,WIDTH,3*TILE_SIZE,fill="#bb11bb")
+    canvas.create_text(WIDTH-WOFFS//2,2.5*TILE_SIZE,text="DASH",fill="#ffffff",font=SCO_FONT)
+
+    canvas.create_rectangle(WIDTH-WOFFS,3.5*TILE_SIZE,WIDTH,4.5*TILE_SIZE,fill="#0000ff")
+    canvas.create_text(WIDTH-WOFFS//2,4*TILE_SIZE,text="PROT",fill="#ffffff",font=SCO_FONT)
+
+    canvas.create_rectangle(WIDTH-WOFFS,5*TILE_SIZE,WIDTH,6*TILE_SIZE,fill="#ff0000")
+    canvas.create_text(WIDTH-WOFFS//2,5.5*TILE_SIZE,text="BONK",font=SCO_FONT)
+
+    canvas.create_rectangle(WIDTH-WOFFS,6.5*TILE_SIZE,WIDTH,7.5*TILE_SIZE,fill="#c0c001")
+    canvas.create_text(WIDTH-WOFFS//2,7*TILE_SIZE,text="GOLD",font=SCO_FONT)
+
+    canvas.create_rectangle(WIDTH-WOFFS,8*TILE_SIZE,WIDTH,9*TILE_SIZE,fill="#25ffff")
+    canvas.create_text(WIDTH-WOFFS//2,8.5*TILE_SIZE,text="SPED",font=SCO_FONT)
                 
     # data for each player
     for i in range(N_PLAYERS):
