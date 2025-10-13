@@ -19,7 +19,7 @@ try:
     MAPLEN    = 0
     assert(N_PLAYERS>0)
 except:
-    print("Usage : python3 run___.py <mapName> <maxTurns> <players>",file=sys.stderr)
+    print("Usage : python3 run___.py <mapName> <maxTurns> <initial_DT> <players>",file=sys.stderr)
     assert 0
 map = []
 ''' map = (string * int * int | int array) array array --> (tileName, resource, tileMeta) '''
@@ -138,6 +138,7 @@ def applyBonus(pl_i,x0,y0,xd,yd,mved):
         curX=xd
         curY=yd
         for _ in range(tile[2]):
+            inBounds=areValid(curX+Dx,curY+Dy)
             target=targetMinionData(pl_i,curX+Dx,curY+Dy)
             if((curX+Dx,curY+Dy) in PLAYER_MINIONS[pl_i].keys()):
                 # dont forget to put this piece of sh*t before the second condition, otherwise minions will merge and break everything >:/
@@ -147,9 +148,10 @@ def applyBonus(pl_i,x0,y0,xd,yd,mved):
                 minData[0] -= toTransfer
                 minTarget[0] += toTransfer
             elif(target == -1):
-                # move
-                curX += Dx
-                curY += Dy
+                if(inBounds):
+                    # move
+                    curX += Dx
+                    curY += Dy
             else:
                 # attack (ONE-SIDED)
                 minHit=PLAYER_MINIONS[target][(curX+Dx,curY+Dy)]
@@ -158,7 +160,7 @@ def applyBonus(pl_i,x0,y0,xd,yd,mved):
         del PLAYER_MINIONS[pl_i][(xd,yd)]
         PLAYER_MINIONS[pl_i][(curX,curY)] = minCpy
 
-        if(curX != xd or curY != yd):
+        if((areValid(curX,curY)) and (curX != xd or curY != yd)):
             applyBonus(pl_i,curX-Dx,curY-Dy,curX,curY,mved)
         else:
             mved[(curX,curY)]=True

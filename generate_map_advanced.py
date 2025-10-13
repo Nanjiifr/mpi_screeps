@@ -9,15 +9,17 @@ argument 3 : the average value of a cell (can be a float)
 argument 4 : the standard deviation of the values of a cell (gaussian distribution)
 argument 5 : the value buff towards the center (avg at the center is this_value + avg_value)
 argument 6 : the percentage of special tiles
+argument 7 : the max distance to the center for special tiles to start spawning (between 0 and N-1)
 '''
 
 try:
     # parse everything
-    _,filename,N,avg,std,midbuff,sp = sys.argv
-    N,avg,std,midbuff,sp = int(N),float(avg),float(std),float(midbuff),float(sp)
+    _,filename,N,avg,std,midbuff,sp,spDist = sys.argv
+    N,avg,std,midbuff,sp,spDist = int(N),float(avg),float(std),float(midbuff),float(sp),int(spDist)
     
     # build walls (all coords here should be between 0 and N-1)
-    walls = [[4, 0], [4, 1], [0, 4], [1, 4]]
+    #walls = [[4, 0], [4, 1], [0, 4], [1, 4]]
+    walls = [[3,3], [2,3], [3,2]]
 
     # out file
     f=open(filename,"w")
@@ -45,7 +47,7 @@ try:
             if not ([line, col] in walls):
                 value = str(min(10,max(1,int(boxMuller(line,col)))))
                 
-            if ((abs(line-N) <= N//2-1 and abs(col-N) <= N//2-1) and (spVal < sp)):
+            if ((abs(line-N) <= spDist and abs(col-N) <= spDist) and (spVal < sp)):
                 weight=random.randint(0,100)
                 sum=spWeights[0]
                 i=0
