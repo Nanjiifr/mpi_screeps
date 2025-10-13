@@ -69,6 +69,12 @@ for pname in PLAYER_NAMES:
 # pre-generate all random events (declaring it here because needed by the writer)
 randomEventList=[]
 
+## data regarding random events
+addHP=0
+addDMG=0
+addCapa=0
+addPump=0
+
 # writes data
 def write_player_data(pl_i,curTurn):
     f=open("mapData.txt", "w")
@@ -120,7 +126,7 @@ def write_player_data(pl_i,curTurn):
 
     # random events
     for i in range(len(randomEventList)):
-        print(f"{randomEventList[i]},{150*(i+1)}",file=f,end=" ")
+        print(f"{randomEventList[i]},{(curTurn//150)*150+150*(i+1)}",file=f,end=" ")
 
     print("",file=f)
 
@@ -156,7 +162,7 @@ def applyBonus(pl_i,x0,y0,xd,yd,mved):
                 # dont forget to put this piece of sh*t before the second condition, otherwise minions will merge and break everything >:/
                 # transfer
                 minTarget=PLAYER_MINIONS[pl_i][(curX+Dx,curY+Dy)]
-                toTransfer=min(minData[0],minTarget[2]-minTarget[0])
+                toTransfer=min(minData[0],(1+addCapa)*minTarget[2]-minTarget[0])
                 minData[0] -= toTransfer
                 minTarget[0] += toTransfer
             elif(target == -1):
@@ -167,7 +173,7 @@ def applyBonus(pl_i,x0,y0,xd,yd,mved):
             else:
                 # attack (ONE-SIDED)
                 minHit=PLAYER_MINIONS[target][(curX+Dx,curY+Dy)]
-                minHit[1] -= minData[3]
+                minHit[1] -= minData[3]*(1+addDMG)//(1+addHP)
         minCpy = [minData[0],minData[1],minData[2],minData[3]]
         del PLAYER_MINIONS[pl_i][(xd,yd)]
         PLAYER_MINIONS[pl_i][(curX,curY)] = minCpy
@@ -246,12 +252,13 @@ def read_player_data(pl_i):
                     if(xdest==x and ydest==y):
                         # pump
                         tile=map[x][y]
-                        if(tile[1] > 0 and minData[0] < minData[2]):
-                            map[x][y] = (tile[0],tile[1]-1,tile[2])
-                            minData[0] += 1
-                            PLAYER_CARRY[pl_i]+=1
-                            minionMoved[(x,y)]=True
-                            print(f"PUMP {x},{y}",file=logFile,end="\n")
+                        for _ in range(1+addPump):
+                            if(tile[1] > 0 and minData[0] < minData[2]*(1+addCapa)):
+                                    map[x][y] = (tile[0],tile[1]-1,tile[2])
+                                    minData[0]+=1
+                                    PLAYER_CARRY[pl_i]+=1
+                                    minionMoved[(x,y)]=True
+                                    print(f"PUMP {x},{y}",file=logFile,end="\n")
                         else:
                             print(f"PUMP_EMPTY {x},{y}",file=logFile,end="\n")
 
@@ -269,7 +276,7 @@ def read_player_data(pl_i):
                         # moving into a friendly minion
                         elif((xdest,ydest) in PLAYER_MINIONS[pl_i].keys()):
                             minTarget=PLAYER_MINIONS[pl_i][(xdest,ydest)]
-                            toTransfer=min(minData[0],minTarget[2]-minTarget[0])
+                            toTransfer=min(minData[0],(1+addCapa)*minTarget[2]-minTarget[0])
                             #print(minData[0],minTarget[2]-minTarget[0])
                             minData[0] -= toTransfer
                             minTarget[0] += toTransfer
@@ -293,8 +300,8 @@ def read_player_data(pl_i):
                             # attack
                             else:
                                 minHit=PLAYER_MINIONS[target][(xdest,ydest)]
-                                minHit[1] -= minData[3]
-                                minData[1] -= minHit[3]
+                                minHit[1] -= minData[3]*(1+addDMG)//(1+addHP)
+                                minData[1] -= minHit[3]*(1+addDMG)//(1+addHP)
                                 if(minHit[1] > 0):
                                     # if it didnt kill, it counts as a move
                                     minionMoved[(x,y)]=True
@@ -517,9 +524,9 @@ def drawMap(root,canvas,curTurn):
             y1 = y0+TILE_SIZE
 
             canvas.create_rectangle(x0+MN_OFFSET,y0+MN_OFFSET,x1-MN_OFFSET,y1-MN_OFFSET, fill=PLAYER_COLOR[i])
-            canvas.create_text((x0+x1)//2, (y0+y1)//2-TILE_SIZE//3,text=str(cap)+"/"+str(size),font=MIN_FONT)
-            canvas.create_text((x0+x1)//2, (y0+y1)//2             ,text=str(atk)+" DMG",font=MI2_FONT)
-            canvas.create_text((x0+x1)//2, (y0+y1)//2+TILE_SIZE//3,text=str(hp)+" HP",font=MI2_FONT)
+            canvas.create_text((x0+x1)//2, (y0+y1)//2-TILE_SIZE//3,text=str(cap*(1+addCapa))+"/"+str(size),font=MIN_FONT)
+            canvas.create_text((x0+x1)//2, (y0+y1)//2             ,text=str(atk*(1+addDMG))+" DMG",font=MI2_FONT)
+            canvas.create_text((x0+x1)//2, (y0+y1)//2+TILE_SIZE//3,text=str(hp*(1+addHP))+" HP",font=MI2_FONT)
 
     # metadata
     # current turn
@@ -570,6 +577,13 @@ def nothing():
     # a function that does nothing
     pass
 
+def reset_all():
+    global addDMG
+    global addHP
+    global addCapa
+    global addPump
+    addDMG,addHP,addCapa,addPump=0,0,0,0
+
 def hello_i_like_money():
     # money galore event
     for i in range(MAPLEN):
@@ -577,12 +591,52 @@ def hello_i_like_money():
             tile=map[i][j]
             map[i][j] = (tile[0],min(10,tile[1]+2),tile[2])
 
+def thats_a_lot_of_damage():
+    global addDMG
+    addDMG+=1
+
+def protection_iv():
+    global addHP
+    addHP+=1
+
+def quantum_storage():
+    global addCapa
+    addCapa+=1
+
+def america():
+    global addPump
+    addPump+=1
+
 randomEvents=[{
     "name":"MoneyGalore",
     "weight":10,
     "lastingTurns":-1,
     "onTrigFct":hello_i_like_money,
     "onEndFct":nothing
+},{
+    "name":"bonking",
+    "weight":10,
+    "lastingTurns":20,
+    "onTrigFct":thats_a_lot_of_damage,
+    "onEndFct":reset_all
+},{
+    "name":"cant_touch_me",
+    "weight":10,
+    "lastingTurns":20,
+    "onTrigFct":protection_iv,
+    "onEndFct":reset_all
+},{
+    "name":"more_storage",
+    "weight":10,
+    "lastingTurns":20,
+    "onTrigFct":quantum_storage,
+    "onEndFct":reset_all
+},{
+    "name":"extraction",
+    "weight":10,
+    "lastingTurns":20,
+    "onTrigFct":america,
+    "onEndFct":reset_all
 }]
 ''' list of dicts -> {name, weight, lastingTurns, onTrigFct, onEndFct} 
     Functions take nothing as arguments and return None '''

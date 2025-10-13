@@ -9,14 +9,14 @@ Every tile will receive +2$ (does not exceed the 10 limit)
 **[1] Sharpness V**
 For the next 10 turns, every entity will have its attack doubled
 
-**[2] Oversized**
+**[2] Prot IV**
+For the next 10 turns, every entity will be invincible
+
+**[3] Oversized**
 For the next 10 turns, every entity will have its capacity doubled. Once going back to normal, the excess money will not be discarded
 
-**[3] AMERICAAAAAA- (sorry)**
-For the next 10 turns, every entity can pulp 2 resources from a tile
-
-**[4] Prot IV**
-For the next 10 turns, every entity will be invincible
+**[4] AMERICAAAAAA- (sorry)**
+For the next 10 turns, every entity can pump 2 resources from a tile
 
 **[5] Unlimited Power**
 For the next 10 turns, pumping will not consume resources on the map (still requires a tile to have at least one resource to work)
