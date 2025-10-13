@@ -6,14 +6,16 @@ import struct, time, random, subprocess, os
 '''
 argument 1    : map filename
 argument 2    : max number of turns
-arguments 3~N : players (au nombre de N-2)
+argument 3    : stalling time between each turn (seconds)
+arguments 4~N : players (au nombre de N-3)
 '''
 
 # global constants
 try:
     MAPNAME   = sys.argv[1]
     MAX_TURNS = int(sys.argv[2])
-    N_PLAYERS = len(sys.argv)-3
+    DT = float(sys.argv[3])
+    N_PLAYERS = len(sys.argv)-4
     MAPLEN    = 0
     assert(N_PLAYERS>0)
 except:
@@ -33,7 +35,7 @@ ADDTILE_R=5
 ADDTILE_B=4
 PLAYER_COLOR = ["#dd0000", "#dddd00", "#00dd00", "#6666ff"]
 PLAYER_COLOR_2 = ["#dd8888", "#dddd88", "#88dd88", "#aaaaff"]
-DT=0.2
+HALT=False
 
 # player-related constants
 PLAYER_RSCS = [20 for i in range(N_PLAYERS)]
@@ -44,7 +46,7 @@ PLAYER_MINIONS=[{} for _ in range(N_PLAYERS)]
 ''' ((x,y > cap,hp,maxCap,atk) dict) array '''
 PLAYER_NAMES = []
 for p in range(N_PLAYERS):
-    pName = sys.argv[3+p]
+    pName = sys.argv[4+p]
     if(pName[0] != '.'):
         pName = "python3 "+pName
     PLAYER_NAMES.append(pName)
@@ -277,11 +279,18 @@ def read_player_data(pl_i):
                             # attack
                             else:
                                 minHit=PLAYER_MINIONS[target][(xdest,ydest)]
-                                if(minHit[1] > minData[3]):
-                                    # if it didnt kill, it counts as a move
-                                    minionMoved[(x,y)]=True
                                 minHit[1] -= minData[3]
                                 minData[1] -= minHit[3]
+                                if(minHit[1] > 0):
+                                    # if it didnt kill, it counts as a move
+                                    minionMoved[(x,y)]=True
+                                elif(minData[1] > 0):
+                                    # if kill + survive, move
+                                    minCpy = [minData[0],minData[1],minData[2],minData[3]]
+                                    del PLAYER_MINIONS[pl_i][(x,y)]
+                                    PLAYER_MINIONS[pl_i][(xdest,ydest)] = minCpy
+                                    minionMoved[(xdest,ydest)]=True
+
                                 print(f"ATTACK {x},{y},{xdest},{ydest},{minData[3]}",file=logFile,end="\n")
 
                     else:
@@ -544,6 +553,17 @@ def drawMap(root,canvas,curTurn):
 def randomEvent(curTurn):
     pass
 
+def onKeyPress(event):
+    global DT
+    global HALT
+    #print(f"You pressed {event.char}")
+    if(event.char == "+"):
+        DT = max(0.02, DT-0.02)
+    elif(event.char == "-"):
+        DT = min(2.0, DT+0.02)
+    elif(event.char == " "):
+        HALT = not HALT
+
 turnOrder = [i for i in range(N_PLAYERS)]
 def mainLoop():
     global DIG_FONT
@@ -557,6 +577,8 @@ def mainLoop():
     currentTurn=0
     root.title("Moteur Screeps simplifié")
 
+    root.bind('<KeyPress>', onKeyPress)
+
     sizeMult=14/MAPLEN
     DIG_FONT = tk.font.Font(family = "Symbol", size = int(sizeMult*24))
     MIN_FONT = tk.font.Font(family = "monospace", size = int(15*sizeMult))
@@ -564,6 +586,7 @@ def mainLoop():
     LEA_FONT = tk.font.Font(family = "monospace", size = int(sizeMult*30))
     NAM_FONT = tk.font.Font(family = "Arial", size = int(sizeMult*12))
     SCO_FONT = tk.font.Font(family = "Bold", size = int(sizeMult*20))
+    HAL_FONT = tk.font.Font(family = "Bold", size = 140)
 
     canvas = tk.Canvas(root, width=WIDTH, height=HEIGHT, bg="white")
     canvas.pack()
@@ -586,6 +609,11 @@ def mainLoop():
             canvas = refreshCanvas(root,canvas)
         
         drawMap(root,canvas,currentTurn)
+        while(HALT):
+            time.sleep(0.2)
+            canvas.create_text(WIDTH//2,HEIGHT//2,text="PAUSED",fill="#000000",font=HAL_FONT)
+            root.update()
+
         root.update()
 
         # sleep
