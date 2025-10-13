@@ -1,7 +1,8 @@
 import sys
 import tkinter as tk
 import tkinter.font
-import struct, time, random, subprocess, os
+import time, random, os
+import threading
 
 '''
 argument 1    : map filename
@@ -9,6 +10,11 @@ argument 2    : max number of turns
 argument 3    : stalling time between each turn (seconds)
 arguments 4~N : players (au nombre de N-3)
 '''
+
+# music
+def playsound():
+    os.system("mpv audio.MP3 &")
+    print("Done!\n")
 
 # global constants
 try:
@@ -704,6 +710,9 @@ def mainLoop():
 
     drawMap(root,canvas,currentTurn)
     root.update()
+
+    thread = threading.Thread(target=playsound)
+    thread.start()
 
     initRandomEvents()
     while(currentTurn < MAX_TURNS):
