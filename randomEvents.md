@@ -1,4 +1,4 @@
-# Random events [NOT IMPLEMENTED YET] #
+# Random events [WIP] #
 ## How they work ?
 For every 150 turns, a random event will occur. These are NOT known by the players and are listed below :
 
