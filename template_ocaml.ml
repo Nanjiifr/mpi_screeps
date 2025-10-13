@@ -19,6 +19,14 @@ let minions = Array.init nMinions (fun i ->
 ) in
 let myID, myResources = input_line ptr |> String.split_on_char ' ' |> List.map int_of_string |> (function | (a::b::[]) -> a,b | _ -> failwith "invalid 3") in
 let baseX, baseY = input_line ptr |> String.split_on_char ' ' |> List.map int_of_string |> (function | (a::b::[]) -> a,b | _ -> failwith "invalid 4") in
+let curTurn,maxTurn = input_line ptr |> String.split_on_char ' ' |> List.map int_of_string |> (function | (a::b::[]) -> a,b | _ -> failwith "invalid 5") in
+let randomEvents = input_line ptr
+  |> String.split_on_char ' '
+  |> List.map (String.split_on_char ',')
+  |> List.map (function |a::b::[] -> (int_of_string a, int_of_string b) | _ -> (-1, -1))
+  |> List.filter (fun (a,b) -> a <> -1 || b <> -1)
+  |> Array.of_list 
+in
 
 close_in ptr;
 

@@ -66,8 +66,11 @@ for pname in PLAYER_NAMES:
         )
     )
 
+# pre-generate all random events (declaring it here because needed by the writer)
+randomEventList=[]
+
 # writes data
-def write_player_data(pl_i):
+def write_player_data(pl_i,curTurn):
     f=open("mapData.txt", "w")
 
     # map
@@ -111,6 +114,15 @@ def write_player_data(pl_i):
     # current player + your resources
     print(pl_i, PLAYER_RSCS[pl_i],file=f)
     print(PLAYER_SPAWN[pl_i][0],PLAYER_SPAWN[pl_i][1],file=f)
+
+    # turn data
+    print(f"{curTurn} {MAX_TURNS}",file=f)
+
+    # random events
+    for i in range(len(randomEventList)):
+        print(f"{randomEventList[i]},{150*(i+1)}",file=f,end=" ")
+
+    print("",file=f)
 
     f.close()
 
@@ -304,7 +316,7 @@ def read_player_data(pl_i):
                     print(f"INVALID_MINION {x},{y},{xdest},{ydest}",file=logFile,end="\n")
 
 # plays the turn of a player
-def execute_player(pl_i):
+def execute_player(pl_i,curTurn):
     if(pl_i < 0):
         print(f"ERROR : trying to play negative player {pl_i}",file=sys.stderr)
 
@@ -313,7 +325,7 @@ def execute_player(pl_i):
     
     pname = PLAYER_NAMES[pl_i]
     try:
-        write_player_data(pl_i)
+        write_player_data(pl_i,curTurn)
     except:
         print("Error while writing.",file=sys.stderr)
 
@@ -551,10 +563,53 @@ def drawMap(root,canvas,curTurn):
                 text="+"+str(PLAYER_CARRY[p]),
                 fill="#333333",font=LEA_FONT)
 
-# random events
-def randomEvent(curTurn):
+# -------------------------| random events |------------------------- #
+randomEventQueue=[]     # this must be sorted in increasing order at all times
+
+def nothing():
+    # a function that does nothing
     pass
 
+def hello_i_like_money():
+    # money galore event
+    for i in range(MAPLEN):
+        for j in range(MAPLEN):
+            tile=map[i][j]
+            map[i][j] = (tile[0],min(10,tile[1]+2),tile[2])
+
+randomEvents=[{
+    "name":"MoneyGalore",
+    "weight":10,
+    "lastingTurns":-1,
+    "onTrigFct":hello_i_like_money,
+    "onEndFct":nothing
+}]
+''' list of dicts -> {name, weight, lastingTurns, onTrigFct, onEndFct} 
+    Functions take nothing as arguments and return None '''
+
+def initRandomEvents():
+    nEvents=MAX_TURNS//150
+    for _ in range(nEvents+1):
+        randomEventList.append(random.randint(0,len(randomEvents)-1))
+
+def triggerRandomEvent(curTurn):
+    if(curTurn%150 == 0):
+        # one event every 150 turns
+        id=randomEventList.pop(0)
+        randomEvents[id]["onTrigFct"]()
+        randomEventQueue.append((randomEvents[id]["lastingTurns"],randomEvents[id]["onEndFct"]))
+
+def popREQueue():
+    if(randomEventQueue != []):
+        (rem,fct)=randomEventQueue[0]
+        if(rem<=0):
+            fct()
+            randomEventQueue.pop(0)
+        else:
+            randomEventQueue[0]=(rem-1,fct)
+
+# -------------------------| MainLoop |------------------------- #
+# control over simulation speed
 def onKeyPress(event):
     global DT
     global HALT
@@ -596,12 +651,13 @@ def mainLoop():
     drawMap(root,canvas,currentTurn)
     root.update()
 
+    initRandomEvents()
     while(currentTurn < MAX_TURNS):
         st = time.time()
         # turn order is randomized
         random.shuffle(turnOrder)
         for p in turnOrder:
-            execute_player(p)
+            execute_player(p,currentTurn)
             # kill
             killDeadMinions()
 
@@ -625,6 +681,8 @@ def mainLoop():
         # end the turn
         # print(et-st)
         currentTurn += 1
+        popREQueue()
+        triggerRandomEvent(currentTurn)
 
     logFile.close()
 
