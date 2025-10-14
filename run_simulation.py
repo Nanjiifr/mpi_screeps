@@ -352,10 +352,9 @@ def execute_player(pl_i,curTurn):
         print(f"Error while executing player {pl_i}'s code ({PLAYER_NAMES[pl_i]}).",file=sys.stderr)
 
     if(execGood):
-        read_player_data(pl_i)
+        #read_player_data(pl_i)
         try:
-            pass
-            #read_player_data(pl_i)
+            read_player_data(pl_i)
         except:
             print(f"Error while reading data for player {pl_i}.",file=sys.stderr)
 
@@ -426,6 +425,29 @@ with open(MAPNAME) as file:
 
 for (x,y) in PLAYER_SPAWN:
     map[x][y] = ("RESO",0,0)
+
+savex=[[0, 0] for i in range(MAPLEN)]
+savey=[[0, 0] for i in range(MAPLEN)]
+for i in range(MAPLEN):
+    for k in range(2):
+        tilex=map[i][MAPLEN//2-k]
+        tiley=map[MAPLEN//2-k][i]
+        savex[i][k]=tilex[0]
+        savey[i][k]=tiley[0]
+        map[i][MAPLEN//2-k]=("WALL",tilex[1],tilex[2])
+        map[MAPLEN//2-k][i]=("WALL",tiley[1],tiley[2])
+
+isOpen=False
+def enable_interactions(curTurn):
+    global isOpen
+    if(not isOpen and curTurn>=100):
+        isOpen=True
+        for i in range(MAPLEN):
+            for k in range(2):
+                tilex=map[i][MAPLEN//2-k]
+                tiley=map[MAPLEN//2-k][i]
+                map[i][MAPLEN//2-k]=(savex[i][k],tilex[1],tilex[2])
+                map[MAPLEN//2-k][i]=(savey[i][k],tiley[1],tiley[2])
 
 TILE_SIZE=min(WIDTH//(MAPLEN+ADDTILE_R),HEIGHT//(MAPLEN+ADDTILE_B))
 SP_OFFSET=TILE_SIZE/6
@@ -766,6 +788,7 @@ def mainLoop():
         currentTurn += 1
         popREQueue()
         triggerRandomEvent(currentTurn)
+        enable_interactions(currentTurn)
 
     hstat = HALT
     canvas.create_text(WIDTH//2,HEIGHT//2,text="GAME OVER",fill="#000000",font=HAL_FONT)
