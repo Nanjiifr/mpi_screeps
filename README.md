@@ -1,36 +1,153 @@
-# mpi_screeps (draft)
+# Compétition d'IA — Screeps Light
 
-Les caractéristiques des unités : VIE, CAPACITE, FORCE
+L'objectif de ce travail est de construire une stratégie automatisée (souvent appelée *intelligence artificielle* dans le domaine des jeux) pour un jeu compétitif de type **collecte de ressources**.
 
-Impacts :
-- lors d'une attaque, la FORCE de l'un est soustraite à la VIE de l'autre et réciproquement
-- la CAPACITE permet de charger plus de ressource
+---
 
-valeurs par défaut (bonus) : VIE : 2 (+2/pt), CAPACITE : 2 (+2/pt), FORCE : 1 (+1/pt)
+## 1. Présentation du problème
 
-Chaque unité peut :
-- se déplacer
-- pomper une unité de ressource (si son stock est inférieur à sa capacité)
-- transmettre son stock à une unité voisine (ou au dépôt) (min(stock unité, capacite voisine - stock voisine))
-- 
-Une tentative de déplacement vers une unité ennemie voisine est interprétée comme une attaque. Le déplacement a lieu si l'unité ennemie meurt au cours de l'attaque.
+Le jeu se joue sur une **carte carrée** et les matchs classiques se feront entre **4 joueurs**.  
+Chaque case de la carte peut être :
+- un **mur**,
+- un **dépôt**,
+- ou quelques **cases spéciales** (qu’on pourra ignorer dans un premier temps).
 
-Les unités pop sur le dépôt. Une seule unité possible dans chaque case.
+Les murs ne peuvent pas être franchis : il faut les contourner.
 
-Chaque unité a un identifiant unique qui ne change pas au cours de la partie.
-On commence avec 20 ressources
+Les unités, appelées **minions**, disposent de trois caractéristiques à paramétrer à leur création :  
+- leur **vie** ;  
+- leur **attaque** ;  
+- leur **charge maximale**.
 
-Il faut éviter que la stratégie la plus efficace soit de rush l'adversaire en début de partie pour ne pas tuer le jeu.
+À chaque tour de jeu, chaque joueur doit indiquer une nouvelle position pour chaque minion dans le voisinage de celui-ci (haut, bas, gauche, droite) ou éventuellement **rester sur place**.
 
-Dimensions de la map? map torique? nombre de joueurs?
-Quelle structure pour faciliter la lecture de l'entrée/traitement des données?
+---
 
-Les cases de la map contiennent entre 0 et 10 unité de ressources.
+### Combats et transferts
 
-L'objectif est de rendre viables différentes stratégies. Notamment des couloirs d'unités immobiles qui transmettent leur stock jusqu'au dépôt. Des stratégies de défense avec des unités WALL qui encercle ces couloirs, des sentinelles 
+- Un déplacement demandé en direction d’un **minion ennemi** entraîne un **combat** :  
+  chaque protagoniste perd un nombre de points de vie égal à l’attaque de son adversaire.  
+  Si la vie d’un minion tombe à 0, il **meurt**.  
+  Si l’attaquant tue son adversaire, il **prend sa place**, sinon il **reste immobile**.
 
-Un tour de jeu d'un joueur consiste en :
-1) ordre de créer une unité avec 3 nombres indiquant les points d'améliorations sur les caractéristiques
-2) une liste d'ordre pour chaque unité, données dans un ordre au choix du joueur et exécutées dans cet ordre
+- Un déplacement demandé en direction d’un **minion allié** entraîne un **transfert de charge**  
+  (dans la limite de la capacité du receveur), **sans déplacement** effectif.
 
-J'ai essayé avec ChatGPT de faire un début. La génération de la map est plutôt pas mal avec gen_carte.py. L'affichage dans le moteur fonctionne correctement mais par contre soit les bots, soit le moteur ne fonctionne pas correctement. Je n'ai pas débuggé davantage. C'était plus pour avoir une idée de ce à quoi ça pourrait ressembler. Peut-être que certaines choses sont réutilisables.
+---
+
+## 2. Fonctionnement de la simulation
+
+Votre programme est exécuté automatiquement à chaque tour de jeu :  
+
+1. Il **lit** l’état du jeu dans un fichier `mapData.txt` ;  
+2. Il **écrit** ses ordres dans `answer.txt` ;  
+3. Puis il **s’arrête**.
+
+---
+
+### 2.1. Les entrées
+
+Le fichier `mapData.txt` contient plusieurs types de lignes :
+
+- `n` : la largeur de la carte (carrée)  
+- les `n` lignes suivantes décrivent les cases, chacune contenant `n` **triplets** séparés par des espaces :  
+  ```
+  T,N,D
+  ```
+  où :
+  - `T` est le type de case :
+    - `R` : ressource  
+    - `W` : mur  
+    - (d’autres types spéciaux sont décrits dans `special.md`)
+  - `N` : nombre de ressources sur la case (entre 0 et 10)  
+  - `D` : données supplémentaires (pour les cases spéciales)
+
+- `M` : nombre total de minions sur la carte  
+- les `M` lignes suivantes décrivent chaque minion sous la forme :
+  ```
+  P,X,Y,CAR,HP,SIZE,ATK
+  ```
+  où :
+  - `P` : numéro du joueur propriétaire  
+  - `X, Y` : coordonnées du minion  
+  - `CAR` : charge actuelle  
+  - `HP` : points de vie  
+  - `SIZE` : capacité maximale  
+  - `ATK` : points d’attaque  
+
+- `ID RSC` : votre numéro de joueur et votre nombre actuel de ressources  
+- `SPX SPY` : coordonnées de votre dépôt  
+- `TOUR TOURMAX` : tour actuel et tour maximum  
+- Des lignes supplémentaires peuvent indiquer des événements :
+  ```
+  EID,TURN
+  ```
+  (voir `randomEvents.md`)
+
+---
+
+### 2.2. La sortie
+
+Vous devez écrire dans `answer.txt` une liste d’ordres, généralement **un par minion**, sous la forme :
+```
+X, Y, XDEST, YDEST
+```
+
+Vous pouvez aussi **créer un nouveau minion** (un seul par tour) sur le dépôt via une ligne :
+```
+CREATE HP,SIZE,ATK
+```
+
+avec :
+- `HP` ≥ 1 (sinon le minion meurt immédiatement)  
+  → les points de vie effectifs sont `2 × HP`  
+- `SIZE` : charge maximale du minion `2 × SIZE`  
+- `ATK` : points d’attaque (non multipliés)
+
+**Coût total :**
+```
+HP + SIZE + ATK
+```
+
+---
+
+## 3. Exécuter une simulation
+
+Pour générer une carte :
+
+```bash
+python3 generate_map_advanced.py map.txt 10 5 3 3 5 7
+```
+> Ici, `10` est le demi-côté de la carte.
+
+La disposition des murs varie selon la carte.  
+Elle est paramétrable dans le script de génération (mais pas via les paramètres en ligne de commande).
+
+---
+
+Pour lancer une simulation :
+
+```bash
+python3 run_simulation.py map.txt 400 0.3 ./bot1 ./bot2 ./bot3 ./bot4
+```
+
+où :
+- `400` = nombre de tours de la simulation  
+- `0.3` = temps entre deux tours (en secondes)  
+- `bot1` à `bot4` = programmes des joueurs (dans le même dossier)  
+
+Un même programme peut contrôler plusieurs joueurs.
+
+**Touches utiles pendant la simulation :**
+- `+` / `-` : accélérer / ralentir  
+- `Espace` : pause / reprise  
+
+---
+
+## 4. Tournoi
+
+Un **tournoi** sera organisé entre les différents programmes.  
+Les scores seront mis à jour selon un **classement de type ELO**.
+
+Le **score d’un joueur** est le **nombre total de ressources rapatriées** à son dépôt,  
+y compris celles **dépensées par la suite**.
