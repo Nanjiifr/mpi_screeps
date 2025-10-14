@@ -76,10 +76,12 @@ for pname in PLAYER_NAMES:
 randomEventList=[]
 
 ## data regarding random events
+currentRandomEvent=""
 addHP=0
 addDMG=0
 addCapa=0
 addPump=0
+freePump=0
 
 # writes data
 def write_player_data(pl_i,curTurn):
@@ -259,14 +261,14 @@ def read_player_data(pl_i):
                         # pump
                         tile=map[x][y]
                         for _ in range(1+addPump):
-                            if(tile[1] > 0 and minData[0] < minData[2]*(1+addCapa)):
-                                    map[x][y] = (tile[0],tile[1]-1,tile[2])
+                            if(tile[1]*(1-freePump) > 0 and minData[0] < minData[2]*(1+addCapa)):
+                                    map[x][y] = (tile[0],tile[1]-(1-freePump),tile[2])
                                     minData[0]+=1
                                     PLAYER_CARRY[pl_i]+=1
                                     minionMoved[(x,y)]=True
                                     print(f"PUMP {x},{y}",file=logFile,end="\n")
-                        else:
-                            print(f"PUMP_EMPTY {x},{y}",file=logFile,end="\n")
+                            else:
+                                print(f"PUMP_EMPTY {x},{y}",file=logFile,end="\n")
 
                     elif(abs(xdest-x)+abs(ydest-y)==1 and areValid(xdest,ydest)):
                         # movement-based action
@@ -293,7 +295,7 @@ def read_player_data(pl_i):
                             # empty space
                             target=targetMinionData(pl_i,xdest,ydest)
                             if(target == -1):
-                                if(map[xdest][ydest][0] != "WALL"): # not moving into a wall
+                                if(map[xdest][ydest][0] != "WALL" and not ((xdest,ydest) in PLAYER_SPAWN)): # not moving into a wall
                                     minCpy = [minData[0],minData[1],minData[2],minData[3]]
                                     del PLAYER_MINIONS[pl_i][(x,y)]
                                     PLAYER_MINIONS[pl_i][(xdest,ydest)] = minCpy
@@ -538,6 +540,9 @@ def drawMap(root,canvas,curTurn):
     # current turn
     canvas.create_text(TILE_SIZE*(2+MAPLEN)//2,TILE_SIZE//2,text=str(curTurn)+"/"+str(MAX_TURNS),font=MIN_FONT,fill="#222222")
 
+    # random event
+    canvas.create_text(TILE_SIZE*(2+MAPLEN)//2,(1+MAPLEN)*TILE_SIZE+TILE_SIZE//2,text="Event : "+currentRandomEvent,font=MIN_FONT,fill="#222222")
+
     # leaderboard
     maxStat=max(1,max([x+y for x, y in zip(PLAYER_SCORE, PLAYER_CARRY)]))
     for p in range(N_PLAYERS):
@@ -588,7 +593,8 @@ def reset_all():
     global addHP
     global addCapa
     global addPump
-    addDMG,addHP,addCapa,addPump=0,0,0,0
+    global freePump
+    addDMG,addHP,addCapa,addPump,freePump=0,0,0,0,0
 
 def hello_i_like_money():
     # money galore event
@@ -612,6 +618,10 @@ def quantum_storage():
 def america():
     global addPump
     addPump+=1
+
+def free_real_estate():
+    global freePump
+    freePump=1
 
 randomEvents=[{
     "name":"MoneyGalore",
@@ -643,6 +653,12 @@ randomEvents=[{
     "lastingTurns":20,
     "onTrigFct":america,
     "onEndFct":reset_all
+},{
+    "name":"free pump",
+    "weight":10,
+    "lastingTurns":20,
+    "onTrigFct":free_real_estate,
+    "onEndFct":reset_all
 }]
 ''' list of dicts -> {name, weight, lastingTurns, onTrigFct, onEndFct} 
     Functions take nothing as arguments and return None '''
@@ -653,17 +669,21 @@ def initRandomEvents():
         randomEventList.append(random.randint(0,len(randomEvents)-1))
 
 def triggerRandomEvent(curTurn):
+    global currentRandomEvent
     if(curTurn%150 == 0):
         # one event every 150 turns
         id=randomEventList.pop(0)
         randomEvents[id]["onTrigFct"]()
+        currentRandomEvent=randomEvents[id]["name"]
         randomEventQueue.append((randomEvents[id]["lastingTurns"],randomEvents[id]["onEndFct"]))
 
 def popREQueue():
+    global currentRandomEvent
     if(randomEventQueue != []):
         (rem,fct)=randomEventQueue[0]
         if(rem<=0):
             fct()
+            currentRandomEvent=""
             randomEventQueue.pop(0)
         else:
             randomEventQueue[0]=(rem-1,fct)
@@ -731,7 +751,7 @@ def mainLoop():
         
         drawMap(root,canvas,currentTurn)
         while(HALT):
-            time.sleep(0.2)
+            time.sleep(0.4)
             canvas.create_text(WIDTH//2,HEIGHT//2,text="PAUSED",fill="#000000",font=HAL_FONT)
             root.update()
 
@@ -746,6 +766,11 @@ def mainLoop():
         currentTurn += 1
         popREQueue()
         triggerRandomEvent(currentTurn)
+
+    hstat = HALT
+    canvas.create_text(WIDTH//2,HEIGHT//2,text="GAME OVER",fill="#000000",font=HAL_FONT)
+    while(HALT == hstat):
+        root.update()
 
     logFile.close()
 
