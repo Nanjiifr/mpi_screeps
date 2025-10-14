@@ -90,12 +90,12 @@ Le fichier `mapData.txt` contient plusieurs types de lignes :
 
 Vous devez écrire dans `answer.txt` une liste d’ordres, généralement **un par minion**, sous la forme :
 ```
-X, Y, XDEST, YDEST
+X Y XDEST YDEST
 ```
 
 Vous pouvez aussi **créer un nouveau minion** (un seul par tour) sur le dépôt via une ligne :
 ```
-CREATE HP,SIZE,ATK
+CREATE HP SIZE ATK
 ```
 
 avec :
