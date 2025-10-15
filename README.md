@@ -104,6 +104,7 @@ avec :
 - `SIZE` : charge maximale du minion `2 × SIZE`  
 - `ATK` : points d’attaque (non multipliés)
 - `HP` + `2 × SIZE` + `2 × ATK` ≤ 25 (la somme des caractéristiques ne doit pas dépasser 25) 
+
 **Coût total :**
 ```
 HP + SIZE + ATK
