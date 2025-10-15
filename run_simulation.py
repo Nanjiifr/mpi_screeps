@@ -346,7 +346,10 @@ def execute_player(pl_i,curTurn):
 
     execGood=False
     try:
-        os.system(pname)
+        if os.name == "posix":
+            os.system(pname)
+        elif os.name =="nt":
+            os.system('python '+programme[2:])
         execGood=True
     except:
         print(f"Error while executing player {pl_i}'s code ({PLAYER_NAMES[pl_i]}).",file=sys.stderr)

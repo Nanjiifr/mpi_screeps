@@ -21,6 +21,8 @@ Les unités, appelées **minions**, disposent de trois caractéristiques à para
 
 À chaque tour de jeu, chaque joueur doit indiquer une nouvelle position pour chaque minion dans le voisinage de celui-ci (haut, bas, gauche, droite) ou éventuellement **rester sur place**.
 
+Pendant les 100 premiers tours de jeu, les joueurs sont isolés les uns des autres à l'aide d'un mur en croix situé au centre de la map.
+
 ---
 
 ### Combats et transferts
@@ -103,6 +105,7 @@ avec :
   → les points de vie effectifs sont `2 × HP`  
 - `SIZE` : charge maximale du minion `2 × SIZE`  
 - `ATK` : points d’attaque (non multipliés)
+- `2 × HP` + `2 × SIZE` + `ATK` ≤ 25 (la somme des caractéristiques ne doit pas dépasser 25) 
 
 **Coût total :**
 ```
@@ -110,6 +113,7 @@ HP + SIZE + ATK
 ```
 
 ---
+
 
 ## 3. Exécuter une simulation
 
