@@ -233,7 +233,7 @@ def read_player_data(pl_i):
                 dat=line.split(" ")
                 _,hp,size,atk=dat
                 hp,size,atk=int(hp),int(size),int(atk)
-                if(hp>0 and size>=0 and atk >=0):
+                if(hp>0 and size>=0 and atk >=0 and 2*hp+2*size+atk <= 25):
                     if(not (PLAYER_SPAWN[pl_i] in PLAYER_MINIONS[pl_i].keys())):   # check if spawn is free
                         if(PLAYER_RSCS[pl_i] >= hp + size + atk):       # check is the player has enough resources
                             PLAYER_MINIONS[pl_i][PLAYER_SPAWN[pl_i]] = [0,2*hp,2*size,atk]
