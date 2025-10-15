@@ -1,1 +1,1 @@
-ocamlfind ocamlopt bot_aa.ml -o bot_aa
+gcc -Wall -Wpedantic template_c.c -o bot_name
