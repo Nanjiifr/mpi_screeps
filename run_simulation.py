@@ -434,11 +434,12 @@ savey=[[0, 0] for i in range(MAPLEN)]
 for i in range(MAPLEN):
     for k in range(2):
         tilex=map[i][MAPLEN//2-k]
-        tiley=map[MAPLEN//2-k][i]
         savex[i][k]=tilex[0]
-        savey[i][k]=tiley[0]
         map[i][MAPLEN//2-k]=("WALL",tilex[1],tilex[2])
-        map[MAPLEN//2-k][i]=("WALL",tiley[1],tiley[2])
+        if(i != MAPLEN//2 and i != MAPLEN//2-1):
+            tiley=map[MAPLEN//2-k][i]
+            savey[i][k]=tiley[0]
+            map[MAPLEN//2-k][i]=("WALL",tiley[1],tiley[2])
 
 isOpen=False
 def enable_interactions(curTurn):
@@ -448,9 +449,10 @@ def enable_interactions(curTurn):
         for i in range(MAPLEN):
             for k in range(2):
                 tilex=map[i][MAPLEN//2-k]
-                tiley=map[MAPLEN//2-k][i]
                 map[i][MAPLEN//2-k]=(savex[i][k],tilex[1],tilex[2])
-                map[MAPLEN//2-k][i]=(savey[i][k],tiley[1],tiley[2])
+                if(i != MAPLEN//2 and i != MAPLEN//2-1):
+                    tiley=map[MAPLEN//2-k][i]
+                    map[MAPLEN//2-k][i]=(savey[i][k],tiley[1],tiley[2])
 
 TILE_SIZE=min(WIDTH//(MAPLEN+ADDTILE_R),HEIGHT//(MAPLEN+ADDTILE_B))
 SP_OFFSET=TILE_SIZE/6
