@@ -4,3 +4,5 @@ outMap*
 bot_aa*
 bot_name
 bot*
+*.cmo
+*.cmi
