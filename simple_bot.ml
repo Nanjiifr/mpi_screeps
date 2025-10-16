@@ -36,13 +36,60 @@ let getRessourcesDist x y map =
     map;
   dist
 
+let load_prev_moves () =
+  let prev = Hashtbl.create 64 in
+  (try
+     let ic = open_in "simple_bot_last_orders_1.txt" in
+     (try
+        while true do
+          let line = input_line ic |> String.trim in
+          if line <> "" then
+            match String.split_on_char ' ' line with
+            | [ sx; sy; dx; dy ] ->
+                let sx = int_of_string sx
+                and sy = int_of_string sy
+                and dx = int_of_string dx
+                and dy = int_of_string dy in
+                (* We map destination -> source so that, next turn,
+                   current position (dx,dy) yields (sx,sy) as previous *)
+                Hashtbl.replace prev (dx, dy) (sx, sy)
+            | _ -> ()
+        done
+      with End_of_file -> ());
+     close_in ic
+   with _ -> ());
+  prev
+
+let save_current_moves moves =
+  let oc = open_out "simple_bot_last_orders_1.txt" in
+  List.iter
+    (fun (sx, sy, dx, dy) -> Printf.fprintf oc "%d %d %d %d\n" sx sy dx dy)
+    moves;
+  close_out oc
+
+let deprioritize_prev prev_opt arr =
+  match prev_opt with
+  | None -> ()
+  | Some (px, py) ->
+      let last = Array.length arr - 1 in
+      if last >= 0 then (
+        let idx = ref (-1) in
+        for k = 0 to last do
+          let _, (nx, ny) = arr.(k) in
+          if nx = px && ny = py then idx := k
+        done;
+        if !idx >= 0 && !idx < last then (
+          let tmp = arr.(!idx) in
+          arr.(!idx) <- arr.(last);
+          arr.(last) <- tmp))
+
 let can_enter m newX newY used_spaces ally_pos ally_has_space =
   (not used_spaces.(newX).(newY))
   && ((not ally_pos.(newX).(newY))
      || (m.load = m.capacity && ally_has_space.(newX).(newY)))
 
 let playBestActions m map used_spaces ally_pos ally_has_space baseX baseY
-    enemyPos hasEnemies hasResources =
+    enemyPos hasEnemies hasResources prev_opt =
   let x, y = (m.x, m.y)
   and load = m.load
   and capacity = m.capacity
@@ -82,6 +129,7 @@ let playBestActions m map used_spaces ally_pos ally_has_space baseX baseY
         |]
       in
       Array.sort (fun (d1, _) (d2, _) -> d1 - d2) distToTarget;
+      deprioritize_prev prev_opt distToTarget;
       let flag = ref true in
       let i = ref 0 in
       let actionPlayed = ref (x, y) in
@@ -137,6 +185,7 @@ let playBestActions m map used_spaces ally_pos ally_has_space baseX baseY
                 |]
               in
               Array.sort (fun (d1, _) (d2, _) -> d1 - d2) distToTarget;
+              deprioritize_prev prev_opt distToTarget;
               let flag = ref true in
               let i = ref 0 in
               let actionPlayed = ref (x, y) in
@@ -164,6 +213,7 @@ let playBestActions m map used_spaces ally_pos ally_has_space baseX baseY
             |]
           in
           Array.sort (fun (d1, _) (d2, _) -> d1 - d2) distToTarget;
+          deprioritize_prev prev_opt distToTarget;
           let flag = ref true in
           let i = ref 0 in
           let actionPlayed = ref (x, y) in
@@ -292,6 +342,8 @@ TYPE_VITESSE = 'P'
   in
   let attackerCount = minionCount - forrorCount in
 
+  let prev_map = load_prev_moves () in
+
   let ally_pos = Array.make_matrix mapSize mapSize false in
   let ally_has_space = Array.make_matrix mapSize mapSize false in
   Array.iter
@@ -301,21 +353,29 @@ TYPE_VITESSE = 'P'
         if m.load < m.capacity then ally_has_space.(m.x).(m.y) <- true))
     minions;
 
+  let emitted = ref [] in
   Array.iter
     (fun minion ->
       if minion.owner = myID then (
         let temp = usedSpaces.(baseX).(baseY) in
         if minion.load = 0 then usedSpaces.(baseX).(baseY) <- true;
+        let prev_opt =
+          try Some (Hashtbl.find prev_map (minion.x, minion.y))
+          with Not_found -> None
+        in
         let newX, newY =
           playBestActions minion map usedSpaces ally_pos ally_has_space baseX
-            baseY enemyPos hasEnemies hasResources
+            baseY enemyPos hasEnemies hasResources prev_opt
         in
         usedSpaces.(baseX).(baseY) <- temp;
+        emitted := (minion.x, minion.y, newX, newY) :: !emitted;
         Printf.fprintf ptrOut "%d %d %d %d\n" minion.x minion.y newX newY))
     minions;
 
-  if forrorCount < 15 && (curTurn <= 100 || attackerCount > 15) then (
+  if forrorCount < 10 && (curTurn <= 100 || attackerCount > 20) then (
     if myResources >= 10 then Printf.fprintf ptrOut "CREATE 1 9 0\n")
   else if myResources >= 15 then Printf.fprintf ptrOut "CREATE 5 5 5\n";
 
-  close_out ptrOut
+  close_out ptrOut;
+
+  save_current_moves (List.rev !emitted)
