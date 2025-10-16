@@ -570,6 +570,8 @@ def drawMap(root,canvas,curTurn):
 
     # random event
     canvas.create_text(TILE_SIZE*(2+MAPLEN)//2,(1+MAPLEN)*TILE_SIZE+TILE_SIZE//2,text="Event : "+currentRandomEvent,font=MIN_FONT,fill="#222222")
+    if(randomEventList != []):
+        canvas.create_text(TILE_SIZE*(2+MAPLEN)//2,(1+MAPLEN)*TILE_SIZE+TILE_SIZE,text="Next  : "+randomEvents[randomEventList[0]]["name"],font=MIN_FONT,fill="#222222")
 
     # leaderboard
     maxStat=max(1,max([x+y for x, y in zip(PLAYER_SCORE, PLAYER_CARRY)]))
