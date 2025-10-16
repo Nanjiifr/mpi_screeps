@@ -74,6 +74,7 @@ for pname in PLAYER_NAMES:
 
 # pre-generate all random events (declaring it here because needed by the writer)
 randomEventList=[]
+randomEventFullList=[]
 
 ## data regarding random events
 currentRandomEvent=""
@@ -133,8 +134,8 @@ def write_player_data(pl_i,curTurn):
     print(f"{curTurn} {MAX_TURNS}",file=f)
 
     # random events
-    for i in range(len(randomEventList)):
-        print(f"{randomEventList[i]},{(curTurn//150)*150+150*(i+1)}",file=f,end=" ")
+    for i in range(len(randomEventFullList)):
+        print(f"{randomEventFullList[i]},{(i+1)*150}",file=f,end=" ")
 
     print("",file=f)
 
@@ -261,7 +262,7 @@ def read_player_data(pl_i):
                         # pump
                         tile=map[x][y]
                         for _ in range(1+addPump):
-                            if(tile[1]*(1-freePump) > 0 and minData[0] < minData[2]*(1+addCapa)):
+                            if(tile[1] > 0 and minData[0] < minData[2]*(1+addCapa)):
                                     map[x][y] = (tile[0],tile[1]-(1-freePump),tile[2])
                                     minData[0]+=1
                                     PLAYER_CARRY[pl_i]+=1
@@ -694,6 +695,7 @@ def initRandomEvents():
     nEvents=MAX_TURNS//150
     for _ in range(nEvents+1):
         randomEventList.append(random.randint(0,len(randomEvents)-1))
+        randomEventFullList.append(randomEventList[-1])
 
 def triggerRandomEvent(curTurn):
     global currentRandomEvent
