@@ -176,9 +176,11 @@ def applyBonus(pl_i,x0,y0,xd,yd,mved):
                 minTarget[0] += toTransfer
             elif(target == -1):
                 if(inBounds):
-                    # move
-                    curX += Dx
-                    curY += Dy
+                    tile=map[curX+Dx][curY+Dy]
+                    if(tile[0] != "WALL"):
+                        # move
+                        curX += Dx
+                        curY += Dy
             else:
                 # attack (ONE-SIDED)
                 minHit=PLAYER_MINIONS[target][(curX+Dx,curY+Dy)]
