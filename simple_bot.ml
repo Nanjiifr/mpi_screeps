@@ -10,6 +10,118 @@ type minion = {
 
 let calcDist x1 y1 x2 y2 = abs (x1 - x2) + abs (y1 - y2)
 
+let isChainPart m minionMap baseX baseY =
+  let x = m.x and y = m.y in
+  let max_x = Array.length minionMap and max_y = Array.length minionMap.(0) in
+  let rec fetchPossible l i =
+    match i with
+    | 0 ->
+        if x + 1 < max_x then fetchPossible ((x + 1, y) :: l) (i + 1)
+        else fetchPossible l (i + 1)
+    | 1 ->
+        if x - 1 >= 0 then fetchPossible ((x - 1, y) :: l) (i + 1)
+        else fetchPossible l (i + 1)
+    | 2 ->
+        if y + 1 < max_y then fetchPossible ((x, y + 1) :: l) (i + 1)
+        else fetchPossible l (i + 1)
+    | 3 -> if y - 1 >= 0 then (x, y - 1) :: l else l
+    | _ -> l
+  in
+  let moves = fetchPossible [] 0 in
+  List.fold_left
+    (fun acc (x', y') ->
+      if minionMap.(x').(y') || (x' = baseX && y' = baseY) then acc + 1 else acc)
+    0 moves
+  >= 2
+
+let isEndCandidate m minionMap baseX baseY =
+  let x = m.x and y = m.y in
+  match (x, y) with
+  | x, y when x = baseX && y = baseY -> false
+  | _ ->
+      let max_x = Array.length minionMap
+      and max_y = Array.length minionMap.(0) in
+      let rec fetchPossible l i =
+        match i with
+        | 0 ->
+            if x + 1 < max_x then fetchPossible ((x + 1, y) :: l) (i + 1)
+            else fetchPossible l (i + 1)
+        | 1 ->
+            if x - 1 >= 0 then fetchPossible ((x - 1, y) :: l) (i + 1)
+            else fetchPossible l (i + 1)
+        | 2 ->
+            if y + 1 < max_y then fetchPossible ((x, y + 1) :: l) (i + 1)
+            else fetchPossible l (i + 1)
+        | 3 -> if y - 1 >= 0 then (x, y - 1) :: l else l
+        | _ -> l
+      in
+      let moves = fetchPossible [] 0 in
+      List.fold_left
+        (fun acc (x', y') ->
+          if minionMap.(x').(y') || (x' = baseX && y' = baseY) then acc + 1
+          else acc)
+        0 moves
+      = 1
+
+let findEnds minions minionMap baseX baseY myID =
+  Array.fold_left
+    (fun acc m ->
+      if isEndCandidate m minionMap baseX baseY && m.owner = myID then m :: acc
+      else acc)
+    [] minions
+
+let findParts minions minionMap baseX baseY myID =
+  Array.fold_left
+    (fun acc m ->
+      if isChainPart m minionMap baseX baseY && m.owner = myID then m :: acc
+      else acc)
+    [] minions
+
+let getCloserEnd m ends =
+  let rec aux currMin m ends =
+    match ends with
+    | [] -> currMin
+    | h :: t ->
+        if calcDist currMin.x currMin.y m.x m.y > calcDist h.x h.y m.x m.y then
+          h
+        else currMin
+  in
+  aux (List.hd ends) m ends
+
+let getForrors minions minionMap baseX baseY myID =
+  let temp =
+    Array.fold_left
+      (fun acc m ->
+        if
+          (not
+             (isChainPart m minionMap baseX baseY
+             || isEndCandidate m minionMap baseX baseY))
+          && m.owner = myID
+        then m :: acc
+        else acc)
+      [] minions
+  in
+  match List.length temp with
+  | 2 -> temp
+  | n when n > 2 ->
+      fst
+        (List.fold_left
+           (fun (acc, i) m -> if i = 0 then (m :: acc, 0) else (acc, i - 1))
+           ([], n - 2)
+           temp)
+  | 0 -> findEnds minions minionMap baseX baseY myID
+  | 1 ->
+      let ends = findEnds minions minionMap baseX baseY myID in
+      let m = List.hd temp in
+      [ m; getCloserEnd m ends ]
+  | _ -> failwith "Error: positive length expected"
+
+let createForror myResources hasCreated ptrOut =
+  if myResources >= 10 then (
+    Printf.fprintf ptrOut "CREATE 1 9 0\n";
+    hasCreated := true)
+  else hasCreated := false
+
 let getEnemiesDist x y enemyPos =
   let dist =
     Array.make_matrix (Array.length enemyPos) (Array.length enemyPos) max_int
@@ -87,6 +199,11 @@ let can_enter m newX newY used_spaces ally_pos ally_has_space =
   (not used_spaces.(newX).(newY))
   && ((not ally_pos.(newX).(newY))
      || (m.load = m.capacity && ally_has_space.(newX).(newY)))
+
+let createMinionMap minions mapSizeX mapSizeY myID =
+  let mMap = Array.make_matrix mapSizeX mapSizeY false in
+  Array.iter (fun m -> if m.owner = myID then mMap.(m.x).(m.y) <- true) minions;
+  mMap
 
 let playBestActions m map used_spaces ally_pos ally_has_space baseX baseY
     enemyPos hasEnemies hasResources prev_opt =
@@ -372,7 +489,7 @@ TYPE_VITESSE = 'P'
         Printf.fprintf ptrOut "%d %d %d %d\n" minion.x minion.y newX newY))
     minions;
 
-  if forrorCount < 10 && (curTurn <= 100 || attackerCount > 20) then (
+  if forrorCount < 13 && (curTurn <= 100 || attackerCount > 20) then (
     if myResources >= 10 then Printf.fprintf ptrOut "CREATE 1 9 0\n")
   else if myResources >= 15 then Printf.fprintf ptrOut "CREATE 5 5 5\n";
 
